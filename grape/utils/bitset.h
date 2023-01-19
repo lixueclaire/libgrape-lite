@@ -296,6 +296,12 @@ class Bitset {
     return &data_[WORD_INDEX(i)];
   }
 
+  inline size_t get_size() const {return size_; }
+
+  inline size_t get_size_in_words() const {return size_in_words_; }
+
+  inline uint64_t* get_data() {return data_; }
+
  private:
   uint64_t* data_;
   size_t size_;

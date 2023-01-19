@@ -167,6 +167,24 @@ class ThreadLocalMessageBuffer {
   }
 
   /**
+   * @brief Send a vertex's data to a fragment.
+   *
+   * @tparam MESSAGE_T Message type.
+   * @param dst_fid Destination fragment id.
+   * @param vid Vertex id.
+   * @param msg
+   */
+  template <typename VID_T, typename MESSAGE_T>
+  inline void SendVertexToFragment(const fid_t& dst_fid,
+                                   const VID_T& vid, 
+                                   const MESSAGE_T& msg) {
+    to_send_[dst_fid] << vid << msg;
+    if (to_send_[dst_fid].GetSize() > block_size_) {
+        flushLocalBuffer(dst_fid);
+    }
+  }
+
+  /**
    * @brief Send message to a fragment.
    *
    * @tparam MESSAGE_T Message type.
