@@ -56,6 +56,7 @@ class FlashWare : public Communicator, public ParallelEngine {
   void Terminate();
 
   void GetActiveVertices(std::vector<vid_t>& result);
+  void GetActiveVerticesAndSetStates(std::vector<vid_t>& result);
   void GetActiveVertices(std::vector<vid_t>& result, Bitset& d);
   void SyncBitset(Bitset& tmp, Bitset& d);
   void SyncBitset(Bitset& b);
@@ -90,6 +91,7 @@ class FlashWare : public Communicator, public ParallelEngine {
   inline bool IsActive(const vid_t& key) { return is_active_.get_bit(key); }
   inline void SetActive(const vid_t& key) { is_active_.set_bit(key); }
   inline void ResetActive(const vid_t& key) { is_active_.reset_bit(key); }
+  inline void SetStates(const vid_t& key) { states_[key] = next_states_[key]; }
 
  private:
   inline void ToSend(const int& pid, const vid_t& key, const int& tid);
@@ -210,10 +212,23 @@ void FlashWare<fragment_t, value_t>::GetActiveVertices(
 }
 
 template <typename fragment_t, class value_t>
+void FlashWare<fragment_t, value_t>::GetActiveVerticesAndSetStates(
+    std::vector<vid_t>& result) {
+  result.clear();
+  for (auto& u : masters_) {
+    if (IsActive(u)) {
+      SetStates(u);
+      result.push_back(u);
+      ResetActive(u);
+    }
+  }
+}
+
+template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::GetActiveVertices(
     std::vector<vid_t>& result, Bitset& d) {
   SyncBitset(is_active_, d);
-  GetActiveVertices(result);
+  GetActiveVerticesAndSetStates(result);
 }
 
 template <typename fragment_t, class value_t>
@@ -271,10 +286,6 @@ void FlashWare<fragment_t, value_t>::Barrier(bool flag) {
   messages_.StartARound();
 
   ProcessAllMessages(true);
-  ForEach(masters_.begin(), masters_.end(), [this](int tid, vid_t key) {
-    if (IsActive(key))
-      states_[key] = next_states_[key];
-  });
   step_++;
 }
 

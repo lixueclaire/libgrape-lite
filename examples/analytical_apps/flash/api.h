@@ -25,13 +25,17 @@ namespace flash {
 template <typename fragment_t, typename value_t, class F>
 VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f) {
   VSet res;
-  U.fw->ForEach(U.s.begin(), U.s.end(),
+  /*U.fw->ForEach(U.s.begin(), U.s.end(),
                 [&U, &f](int tid, typename fragment_t::vid_t key) {
                   if (f(key, *(U.fw->Get(key))))
                     U.fw->SetActive(key);
                 });
 
-  U.fw->GetActiveVertices(res.s);
+  U.fw->GetActiveVertices(res.s);*/
+  for (auto &key : U.s) {
+    if (f(key, *(U.fw->Get(key))))
+      res.s.push_back(key);
+  }
   return res;
 }
 
@@ -46,9 +50,8 @@ VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m) {
                   m(key, v);
                   U.fw->PutNext(key, v, false, tid);
                 });
-
   U.fw->Barrier();
-  U.fw->GetActiveVertices(res.s);
+  U.fw->GetActiveVerticesAndSetStates(res.s);
   return res;
 }
 
@@ -173,7 +176,7 @@ VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, int h, F& f, M& m,
   });*/
 
   U.fw->Barrier(true);
-  U.fw->GetActiveVertices(res.s);
+  U.fw->GetActiveVerticesAndSetStates(res.s);
   return res;
 }
 
