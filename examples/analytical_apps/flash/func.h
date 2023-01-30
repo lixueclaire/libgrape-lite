@@ -33,6 +33,7 @@ namespace flash {
 #define OutDeg(id) getOutDegree<fragment_t, vid_t>(graph, id)
 #define InDeg(id) getInDegree<fragment_t, vid_t>(graph, id)
 #define Deg(id) (OutDeg(id) + InDeg(id))
+#define Print(...)  if (All.fw->GetPid() == 0) printf(__VA_ARGS__)
 
 #define VSize(U) U.size()
 #define VertexMap(U, f, ...) vertexMapFunction(graph, U, f, ##__VA_ARGS__)

@@ -104,6 +104,7 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
 
   U.fw->Barrier();
   U.fw->GetActiveVertices(res.s, res.d);
+  res.is_dense = true;
   return res;
 }
 

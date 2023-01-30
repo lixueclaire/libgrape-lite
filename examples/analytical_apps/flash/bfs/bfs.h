@@ -39,15 +39,13 @@ class BFSFlash : public FlashAppBase<FRAG_T, VALUE_T> {
   int* Res(value_t* v) { return &(v->dis); }
 
   void Run(const fragment_t& graph, vid_t source) {
-    std::cout << "Run BFS with Flash, source = " << source << std::endl;
+    Print("Run BFS with Flash, source = %d\n", source);
     int n_vertex = graph.GetTotalVerticesNum() + 1;
-    std::cout << "Total vertices: " << n_vertex << std::endl;
+    Print("Total vertices: %d\n", n_vertex);
     vset_t a = All, b;
 
     DefineMapV(init_v) { v.dis = (id == source) ? 0 : -1; };
     a = VertexMap(a, CTrueV, init_v);
-    // std::cout << "-Local Init: " << a.fw->GetPid() << ' ' << a.s.size() << ' '
-    //          << VSize(a) << std::endl;
 
     DefineFV(f_filter) { return id == source; };
     a = VertexMap(a, f_filter);
@@ -57,16 +55,13 @@ class BFSFlash : public FlashAppBase<FRAG_T, VALUE_T> {
     DefineFV(cond) { return v.dis == -1; };
 
     for (int len = VSize(a), i = 1; len > 0; len = VSize(a), ++i) {
-      // if (a.fw->GetPid() == 0) 
-      //   printf("Round %d (Dense): size = %d\n", i, len); 
+      // Print("Round %d (Dense): size = %d\n", i, len);
       // a = EdgeMapDense(a, ED, CTrueE, update, cond);
 
-      // if (a.fw->GetPid() == 0) 
-      //   printf("Round %d (Sparse): size = %d\n", i, len); 
+      // Print("Round %d (Sparse): size = %d\n", i, len);
       // a = EdgeMapSparse(a, ED, CTrueE, update, cond);
 
-      if (a.fw->GetPid() == 0) 
-        printf("Round %d: size = %d\n", i, len);
+      Print("Round %d: size = %d\n", i, len);
       a = EdgeMap(a, ED, CTrueE, update, cond);
     }
   }

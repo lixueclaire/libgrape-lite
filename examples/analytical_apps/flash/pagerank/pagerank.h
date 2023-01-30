@@ -39,9 +39,9 @@ class PRFlash : public FlashAppBase<FRAG_T, VALUE_T> {
   float* Res(value_t* v) { return &(v->val); };
 
   void Run(const fragment_t& graph, int max_iters, float damping = 0.85) {
-    std::cout << "Run PageRank with Flash, max_iters = " << max_iters << std::endl;
+    Print("Run PageRank with Flash, max_iters = %d\n", max_iters);
     int n_vertex = graph.GetTotalVerticesNum();
-    std::cout << "Total vertices: " << n_vertex << std::endl;
+    Print("Total vertices: %d\n", n_vertex);
 
     DefineMapV(init_v) {
       v.val = 1.0 / n_vertex;
@@ -49,7 +49,7 @@ class PRFlash : public FlashAppBase<FRAG_T, VALUE_T> {
       v.deg = OutDeg(id);
     };
     VertexMap(All, CTrueV, init_v);
-    std::cout << "Init complete" << std::endl;
+    Print("Init complete\n");
 
     DefineMapE(update) { d.next += damping * s.val / s.deg; };
     DefineMapV(local) {
@@ -59,8 +59,7 @@ class PRFlash : public FlashAppBase<FRAG_T, VALUE_T> {
     };
 
     for (int i = 0; i < max_iters; i++) {
-      if (All.fw->GetPid() == 0)
-        printf("Round %d\n", i);
+      Print("Round %d\n", i);
       EdgeMapDense(All, ED, CTrueE, update, CTrueV);
       VertexMap(All, CTrueV, local);
     }

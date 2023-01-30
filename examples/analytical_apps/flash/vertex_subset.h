@@ -77,11 +77,10 @@ void VertexSubset<fragment_t, value_t>::ToDense() {
   if (d.get_size() == 0)
     d.init(fw->GetSize());
   else
-    d.clear();
-  Bitset tmp(d.get_size());
+    d.parallel_clear(fw->GetThreadPool());
   fw->ForEach(s.begin(), s.end(),
-              [&tmp](int tid, int key) { tmp.set_bit(key); });
-  fw->SyncBitset(tmp, d);
+              [this](int tid, int key) { this->d.set_bit(key); });
+  fw->SyncBitset(d);
 }
 
 template <typename fragment_t, class value_t>

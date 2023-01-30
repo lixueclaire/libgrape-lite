@@ -58,6 +58,7 @@ class FlashWare : public Communicator, public ParallelEngine {
   void GetActiveVertices(std::vector<vid_t>& result);
   void GetActiveVertices(std::vector<vid_t>& result, Bitset& d);
   void SyncBitset(Bitset& tmp, Bitset& d);
+  void SyncBitset(Bitset& b);
 
   inline value_t* Get(const vid_t& key);
   void PutNext(const vid_t& key, const value_t& value, const bool& flag = false,
@@ -217,7 +218,15 @@ void FlashWare<fragment_t, value_t>::GetActiveVertices(
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::SyncBitset(Bitset& tmp, Bitset& res) {
+  if (res.get_size() < tmp.get_size())
+    res.init(tmp.get_size());
   MPI_Allreduce(tmp.get_data(), res.get_data(), res.get_size_in_words(),
+                MPI_UINT64_T, MPI_BOR, comm_spec_.comm());
+}
+
+template <typename fragment_t, class value_t>
+void FlashWare<fragment_t, value_t>::SyncBitset(Bitset& b) {
+  MPI_Allreduce(MPI_IN_PLACE, b.get_data(), b.get_size_in_words(),
                 MPI_UINT64_T, MPI_BOR, comm_spec_.comm());
 }
 

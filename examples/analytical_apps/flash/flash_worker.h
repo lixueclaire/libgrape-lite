@@ -64,7 +64,7 @@ class FlashWorker {
     MPI_Barrier(comm_spec_.comm());
 
     fw_ = new grape::flash::FlashWare<fragment_t, value_t>;
-    fw_->InitFlashWare(comm_spec_, graph_->GetTotalVerticesNum() + 1,
+    fw_->InitFlashWare(comm_spec_, graph_->GetTotalVerticesNum(),
                        app_->sync_all_, *graph_);
     All.fw = fw_;
     std::vector<vid_t>* masters = fw_->GetMasters();

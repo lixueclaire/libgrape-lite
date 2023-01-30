@@ -40,7 +40,7 @@ class CCFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 
   void Run(const fragment_t& graph) {
     int n_vertex = graph.GetTotalVerticesNum() + 1;
-    std::cout << "Run CC with Flash, total vertices: " << n_vertex << std::endl;
+    Print("Run CC with Flash, total vertices: %d\n", n_vertex);
     vset_t a = All;
 
     DefineMapV(init_v) { v.tag = id; };
@@ -52,14 +52,13 @@ class CCFlash : public FlashAppBase<FRAG_T, VALUE_T> {
     DefineMapE(update) { d.tag = std::min(s.tag, d.tag); };
 
     for (int len = VSize(a), i = 1; len > 0; len = VSize(a), ++i) {
-      // if (a.fw->GetPid() == 0) printf("Round %d (Dense): size = %d\n", i,
-      // len); a = EdgeMapDense(a, EU, check, update, CTrueV);
+      // Print("Round %d (Dense): size = %d\n", i, len);
+      // a = EdgeMapDense(a, EU, check, update, CTrueV);
 
-      // if (a.fw->GetPid() == 0) printf("Round %d (Sparse): size = %d\n", i,
-      // len); a = EdgeMapSparse(a, EU, check, update, CTrueV, update);
+      // Print("Round %d (Sparse): size = %d\n", i, len);
+      // a = EdgeMapSparse(a, EU, check, update, CTrueV, update);
 
-      if (a.fw->GetPid() == 0)
-        printf("Round %d: size = %d\n", i, len);
+      Print("Round %d: size = %d\n", i, len);
       a = EdgeMap(a, EU, check, update, CTrueV, update);
     }
   }

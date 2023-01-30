@@ -75,7 +75,6 @@ void Init() {
 
 void Finalize() {
   grape::FinalizeMPIComm();
-  std::cout << "finalize" << std::endl;
   VLOG(1) << "Workers finalized.";
 }
 
