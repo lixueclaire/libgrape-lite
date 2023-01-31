@@ -42,7 +42,7 @@ class BFSFlash : public FlashAppBase<FRAG_T, VALUE_T> {
     Print("Run BFS with Flash, source = %d\n", source);
     int n_vertex = graph.GetTotalVerticesNum() + 1;
     Print("Total vertices: %d\n", n_vertex);
-    vset_t a = All, b;
+    vset_t a = All;
 
     DefineMapV(init_v) { v.dis = (id == source) ? 0 : -1; };
     a = VertexMap(a, CTrueV, init_v);

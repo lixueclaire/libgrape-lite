@@ -116,6 +116,13 @@ class Bitset {
     }
   }
 
+  void move(Bitset& other) {
+    size_ = other.size_;
+    size_in_words_ = other.size_in_words_;
+    data_ = other.data_;
+    other.data_ = NULL;
+  }
+
   void parallel_clear(ThreadPool& thread_pool) {
     uint32_t thread_num = thread_pool.GetThreadNum();
     size_t chunk_size =

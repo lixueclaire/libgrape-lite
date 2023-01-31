@@ -52,6 +52,15 @@ VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m) {
                 });
   U.fw->Barrier();
   U.fw->GetActiveVerticesAndSetStates(res.s);
+  /*for (auto &key : U.s) {
+    if (f(key, *(U.fw->Get(key)))) {
+      m(key, U.fw->states_[key]);
+      U.fw->next_states_[key] = U.fw->states_[key];
+      U.fw->Synchronize(key);
+      res.s.push_back(key);
+    }
+  }
+  U.fw->Barrier();*/
   return res;
 }
 
@@ -63,7 +72,6 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
   bool flag = ((&U) == (&All));
   if (!flag)
     U.ToDense();
-  VSet res;
 
   U.fw->ForEach(graph.InnerVertices(),
                 [&flag, &graph, &U, &h, &f, &m, &c](int tid, vertex_t u) {
@@ -106,8 +114,10 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                 });
 
   U.fw->Barrier();
+  VSet res;
   U.fw->GetActiveVertices(res.s, res.d);
   res.is_dense = true;
+  // U.fw->GetActiveVerticesAndSetStates(res.s);
   return res;
 }
 

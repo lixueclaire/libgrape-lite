@@ -50,6 +50,12 @@ class VertexSubset {
     is_dense = other.is_dense;
     return *this;
   }
+  VertexSubset& operator=(VertexSubset &&other) {
+    s = std::move(other.s);
+    d.move(other.d);
+    is_dense = other.is_dense;
+    return *this;
+  }
   ~VertexSubset() { s.clear(); }
 
   inline int size() const {

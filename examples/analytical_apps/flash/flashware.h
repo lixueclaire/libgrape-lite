@@ -96,6 +96,7 @@ class FlashWare : public Communicator, public ParallelEngine {
  private:
   inline void ToSend(const int& pid, const vid_t& key, const int& tid);
   inline void Synchronize(const int& tid, const vid_t& key);
+  inline void Synchronize(const vid_t& key);
   inline void SynchronizeAll();
   inline void Update(const int& tid, const vid_t& key);
   inline void UpdateAll();
@@ -306,6 +307,14 @@ inline void FlashWare<fragment_t, value_t>::Synchronize(const int& tid,
       ToSend(i, key, tid);
   ResetDirty(key);
   SetActive(key);
+}
+
+template <typename fragment_t, class value_t>
+inline void FlashWare<fragment_t, value_t>::Synchronize(const vid_t& key) {
+  for (int i = 0; i < n_procs_; i++)
+    if (i != pid_ &&
+        (sync_all_ || (nb_ids_.get_bit(key / n_procs_ * n_procs_ + i))))
+      messages_.SendVertexToFragment<vid_t, value_t>(i, key, states_[key], 0);
 }
 
 template <typename fragment_t, class value_t>
