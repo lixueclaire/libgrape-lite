@@ -77,6 +77,7 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                 [&flag, &graph, &U, &h, &f, &m, &c](int tid, vertex_t u) {
                   vid_t vid = graph.GetId(u);
                   value_t v = *(U.fw->Get(vid));
+                  bool is_update = false;
                   if (!c(vid, v))
                     return;
                   if (h == EU || h == ED) {
@@ -87,7 +88,7 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                         value_t nb = *(U.fw->Get(nb_id));
                         if (f(nb_id, vid, nb, v)) {
                           m(nb_id, vid, nb, v);
-                          U.fw->SetDirty(vid);
+                          is_update = true;
                           if (!c(vid, v))
                             break;
                         }
@@ -102,14 +103,14 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                         value_t nb = *(U.fw->Get(nb_id));
                         if (f(nb_id, vid, nb, v)) {
                           m(nb_id, vid, nb, v);
-                          U.fw->SetDirty(vid);
+                          is_update = true;
                           if (!c(vid, v))
                             break;
                         }
                       }
                     }
                   }
-                  if (U.fw->IsDirty(vid))
+                  if (is_update)
                     U.fw->PutNext(vid, v, false, tid);
                 });
 

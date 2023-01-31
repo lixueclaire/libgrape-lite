@@ -301,21 +301,21 @@ inline void FlashWare<fragment_t, value_t>::ToSend(const int& pid,
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::Synchronize(const int& tid,
                                                         const vid_t& key) {
+  int x = key / n_procs_ * n_procs_;
   for (int i = 0; i < n_procs_; i++)
-    if (i != pid_ &&
-        (sync_all_ || (nb_ids_.get_bit(key / n_procs_ * n_procs_ + i))))
+    if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       ToSend(i, key, tid);
   ResetDirty(key);
   SetActive(key);
 }
 
-template <typename fragment_t, class value_t>
+/*template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::Synchronize(const vid_t& key) {
+  int x = key / n_procs_ * n_procs_;
   for (int i = 0; i < n_procs_; i++)
-    if (i != pid_ &&
-        (sync_all_ || (nb_ids_.get_bit(key / n_procs_ * n_procs_ + i))))
+    if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       messages_.SendVertexToFragment<vid_t, value_t>(i, key, states_[key], 0);
-}
+}*/
 
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SynchronizeAll() {
