@@ -39,6 +39,17 @@ class VertexSubset {
   static grape::flash::FlashWare<fragment_t, value_t>* fw;
 
   VertexSubset() { is_dense = false; }
+  VertexSubset(const VertexSubset &other) {
+    s = other.s;
+    d.copy(other.d);
+    is_dense = other.is_dense;
+  }
+  VertexSubset& operator=(const VertexSubset &other) {
+    s = other.s;
+    d.copy(other.d);
+    is_dense = other.is_dense;
+    return *this;
+  }
   ~VertexSubset() { s.clear(); }
 
   inline int size() const {
