@@ -39,7 +39,6 @@ class FlashWare : public Communicator, public ParallelEngine {
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
   using value_t = VALUE_T;
-  static const int SEG = 32;
 
   FlashWare() = default;
   ~FlashWare() {
@@ -62,9 +61,9 @@ class FlashWare : public Communicator, public ParallelEngine {
   void SyncBitset(Bitset& b);
 
   inline value_t* Get(const vid_t& key);
+  inline void PutNext(const vid_t& key, const value_t& value);
   inline void PutNextLocal(const vid_t& key, const value_t& value, const int& tid = 0);
   inline void PutNextPull(const vid_t& key, const value_t& value, const int& tid = 0);
-  void PutNext(const vid_t& key, const value_t& value);
   void Barrier(bool flag = false);
 
  public:
@@ -82,20 +81,17 @@ class FlashWare : public Communicator, public ParallelEngine {
   inline std::vector<vid_t>* GetMirrors() { return &mirrors_; }
   inline int GetMasterPid(const vid_t& key) { return key % n_procs_; }
   inline bool IsMaster(const vid_t& key) { return GetMasterPid(key) == pid_; }
-  inline bool IsDirty(const vid_t& key) { return is_dirty_.get_bit(key); }
-  inline void SetDirty(const vid_t& key) { is_dirty_.set_bit(key); }
-  inline void ResetDirty(const vid_t& key) { is_dirty_.reset_bit(key); }
   inline bool IsActive(const vid_t& key) { return is_active_.get_bit(key); }
   inline void SetActive(const vid_t& key) { is_active_.set_bit(key); }
   inline void ResetActive(const vid_t& key) { is_active_.reset_bit(key); }
   inline void SetStates(const vid_t& key) { states_[key] = next_states_[key]; }
 
  private:
-  inline void ToSend(const int& pid, const vid_t& key, const int& tid);
-  inline void ToSendLocal(const int& pid, const vid_t& key, const int& tid);
-  inline void Synchronize(const int& tid, const vid_t& key);
-  inline void SynchronizeLocal(const int& tid, const vid_t& key);
-  inline void UpdateAll();
+  inline void SendNext(const int& pid, const vid_t& key, const int& tid);
+  inline void SendCurrent(const int& pid, const vid_t& key, const int& tid);
+  inline void SynchronizeNext(const int& tid, const vid_t& key);
+  inline void SynchronizeCurrent(const int& tid, const vid_t& key);
+  inline void UpdateAllMirrors();
   inline void ProcessMasterMessage(const vid_t& key, const value_t& value);
   inline void ProcessMirrorMessage(const vid_t& key, const value_t& value);
   inline void ProcessAllMessages(const bool& is_master, 
@@ -116,13 +112,13 @@ class FlashWare : public Communicator, public ParallelEngine {
 
   value_t* states_;
   value_t* next_states_;
-  Bitset is_dirty_;
   Bitset is_active_;
   int step_;
-  std::mutex* seg_mutex_;
 
   std::function<void(const vid_t, const vid_t, const value_t&, value_t&)>
       f_agg_;
+  // static const int SEG = 32;
+  // std::mutex* seg_mutex_;
 };
 
 template <typename fragment_t, class value_t>
@@ -140,13 +136,12 @@ void FlashWare<fragment_t, value_t>::InitFlashWare(const CommSpec& comm_spec,
   n_procs_ = comm_spec_.fnum();
   pid_ = comm_spec_.fid();
   n_threads_ = thread_num();
-  seg_mutex_ = new std::mutex[SEG];
+  // seg_mutex_ = new std::mutex[SEG];
 
   n_ = n_vertices;
   n_loc_ = n_ / n_procs_ + (pid_ < (n_ % n_procs_) ? 1 : 0);
   states_ = new value_t[n_];
   next_states_ = new value_t[n_];
-  is_dirty_.init(n_);
   is_active_.init(n_);
 
   masters_.clear();
@@ -158,8 +153,8 @@ void FlashWare<fragment_t, value_t>::InitFlashWare(const CommSpec& comm_spec,
       mirrors_.push_back(i);
 
   sync_all_ = sync_all;
-  nb_ids_.init(n_loc_ * n_procs_);
   if (!sync_all_) {
+    nb_ids_.init(n_loc_ * n_procs_);
     ForEach(graph.InnerVertices(),
             [this, &graph](int tid, typename fragment_t::vertex_t v) {
               auto dsts = graph.IOEDests(v);
@@ -229,7 +224,7 @@ void FlashWare<fragment_t, value_t>::GetActiveVerticesAndSetStates(
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::SyncBitset(Bitset& tmp, Bitset& res) {
-  if (res.get_size() < tmp.get_size())
+  if (res.get_size() != tmp.get_size())
     res.init(tmp.get_size());
   MPI_Allreduce(tmp.get_data(), res.get_data(), res.get_size_in_words(),
                 MPI_UINT64_T, MPI_BOR, comm_spec_.comm());
@@ -250,22 +245,22 @@ template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::PutNextLocal(
     const vid_t& key, const value_t& value, const int& tid) {
   states_[key] = value;
-  SynchronizeLocal(tid, key);
+  SynchronizeCurrent(tid, key);
 }
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::PutNextPull(
     const vid_t& key, const value_t& value, const int& tid) {
   next_states_[key] = value;
-  Synchronize(tid, key);
+  SynchronizeNext(tid, key);
 }
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::PutNext(const vid_t& key,
                                              const value_t& value) {
   // seg_mutex_[key % SEG].lock();
-  if (!IsDirty(key)) {
-    SetDirty(key);
+  if (!IsActive(key)) {
+    SetActive(key);
     next_states_[key] = states_[key];
   }
   if (f_agg_ != nullptr)
@@ -277,8 +272,8 @@ void FlashWare<fragment_t, value_t>::PutNext(const vid_t& key,
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::Barrier(bool flag) {
-  if (flag)
-    UpdateAll();
+  if (flag) 
+    UpdateAllMirrors();
   messages_.FinishARound();
   MPI_Barrier(comm_spec_.comm());
   messages_.StartARound();
@@ -288,46 +283,44 @@ void FlashWare<fragment_t, value_t>::Barrier(bool flag) {
 }
 
 template <typename fragment_t, class value_t>
-inline void FlashWare<fragment_t, value_t>::ToSend(const int& pid,
-                                                   const vid_t& key,
-                                                   const int& tid) {
+inline void FlashWare<fragment_t, value_t>::SendNext(
+    const int& pid, const vid_t& key, const int& tid) {
   messages_.SendVertexToFragment<vid_t, value_t>(pid, key, next_states_[key],
                                                  tid);
 }
 
 template <typename fragment_t, class value_t>
-inline void FlashWare<fragment_t, value_t>::ToSendLocal(const int& pid,
-                                                        const vid_t& key,
-                                                        const int& tid) {
+inline void FlashWare<fragment_t, value_t>::SendCurrent(
+    const int& pid, const vid_t& key, const int& tid) {
   messages_.SendVertexToFragment<vid_t, value_t>(pid, key, states_[key], tid);
 }
 
 template <typename fragment_t, class value_t>
-inline void FlashWare<fragment_t, value_t>::SynchronizeLocal(
+inline void FlashWare<fragment_t, value_t>::SynchronizeCurrent(
     const int& tid, const vid_t& key) {
   int x = key / n_procs_ * n_procs_;
   for (int i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
-      ToSendLocal(i, key, tid);
+      SendCurrent(i, key, tid);
   SetActive(key);
 }
 
 template <typename fragment_t, class value_t>
-inline void FlashWare<fragment_t, value_t>::Synchronize(const int& tid,
-                                                        const vid_t& key) {
+inline void FlashWare<fragment_t, value_t>::SynchronizeNext(
+    const int& tid, const vid_t& key) {
   int x = key / n_procs_ * n_procs_;
   for (int i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
-      ToSend(i, key, tid);
+      SendNext(i, key, tid);
   SetActive(key);
 }
 
 template <typename fragment_t, class value_t>
-inline void FlashWare<fragment_t, value_t>::UpdateAll() {
+inline void FlashWare<fragment_t, value_t>::UpdateAllMirrors() {
   ForEach(mirrors_.begin(), mirrors_.end(), [this](int tid, vid_t key) {
-    if (IsDirty(key)) {
-      ToSend(GetMasterPid(key), key, tid);
-      ResetDirty(key);
+    if (IsActive(key)) {
+      SendNext(GetMasterPid(key), key, tid);
+      ResetActive(key);
     }
   });
 
@@ -337,17 +330,15 @@ inline void FlashWare<fragment_t, value_t>::UpdateAll() {
   ProcessAllMessages(true, f_agg_ == nullptr);
 
   ForEach(masters_.begin(), masters_.end(), [this](int tid, vid_t key) {
-    if (IsDirty(key)) {
-      Synchronize(tid, key);
-      ResetDirty(key);
-    }
+    if (IsActive(key)) 
+      SynchronizeNext(tid, key);
   });
 }
 
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::ProcessMasterMessage(
     const vid_t& key, const value_t& value) {
-  SetDirty(key);
+  SetActive(key);
   if (f_agg_ == nullptr)
     next_states_[key] = value;
   else
