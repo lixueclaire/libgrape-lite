@@ -53,7 +53,12 @@ namespace flash {
   auto F = [&](const vid_t sid, const vid_t did, const value_t& s, value_t& d)
 #define CTrueV cTrueV<vid_t, value_t>
 #define CTrueE cTrueE<vid_t, value_t>
+
 #define EjoinV(E, V) E, V
+#define VjoinP(property) std::vector<vid_t> res; res.push_back(v.property); return res;
+#define DefineOutEdges(F) auto F=[&](value_t& v) -> std::vector<vid_t>
+#define DefineInEdges(F) auto F=[&](value_t& v) -> std::vector<vid_t>
+#define use_edge(F) F(v)
 
 template <typename vid_t, typename value_t>
 inline bool cTrueV(const vid_t id, const value_t& v) {

@@ -70,7 +70,7 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, VSet& T,
     U.ToDense();
 
   U.fw->ForEach(T.s.begin(), T.s.end(),
-                [&flag, &graph, &U, &h, &f, &m, &c, &b](int tid, typename fragment_t::vid_t vid) {
+                [&flag, &graph, &U, &h, &f, &m, &c, &b](int tid, vid_t vid) {
                   vertex_t u;
                   if (!graph.GetVertex(vid, u)) return;
                   value_t v = *(U.fw->Get(vid));
@@ -117,7 +117,6 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, VSet& T,
   U.fw->GetActiveVerticesAndSetStates(res.s, res.d);
   return res;
 }
-
 
 template <typename fragment_t, typename value_t, class F, class M, class C>
 VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
@@ -176,12 +175,54 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
   return res;
 }
 
+template <typename fragment_t, typename value_t, class F, class M, class C, class H>
+VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, H& h, VSet& T,
+                          F& f, M& m, C& c, bool b = true) {
+  using vid_t = typename fragment_t::vid_t;
+  bool flag = ((&U) == (&All));
+  if (!flag)
+    U.ToDense();
+
+  U.fw->ForEach(T.s.begin(), T.s.end(),
+                [&flag, &U, &h, &f, &m, &c, &b](int tid, vid_t vid) {
+                  value_t v = *(U.fw->Get(vid));
+                  bool is_update = false;
+                  if (!c(vid, v))
+                    return;
+                  auto es = use_edge(h);
+                  for (auto& nb_id : es) {
+                    if (flag || U.IsIn(nb_id)) {
+                      value_t nb = *(U.fw->Get(nb_id));
+                      if (f(nb_id, vid, nb, v)) {
+                        m(nb_id, vid, nb, v);
+                        is_update = true;
+                        if (!c(vid, v))
+                        break;
+                      }
+                    }
+                  }
+                  if (is_update)
+                    U.fw->PutNextPull(vid, v, b, tid);
+                });
+
+  VSet res;
+  U.fw->Barrier();
+  res.is_dense = true;
+  U.fw->GetActiveVerticesAndSetStates(res.s, res.d);
+  return res;
+}
+
+template <typename fragment_t, typename value_t, class F, class M, class C, class H>
+VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, H& h, F& f, M& m,
+                          C& c, bool b = true) {
+  return edgeMapDenseFunction(graph, U, h, All, f, m, c, b);
+}
+
 template <typename fragment_t, typename value_t, class F, class M, class C>
 VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                      C& c) {
   using vertex_t = typename fragment_t::vertex_t;
   using vid_t = typename fragment_t::vid_t;
-  VSet res;
 
   for (auto& vid : U.s) {
     vertex_t u;
@@ -240,29 +281,53 @@ VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, int h, F& f, M& m,
     }
   });*/
 
+  VSet res;
   U.fw->Barrier(true);
   U.fw->GetActiveVerticesAndSetStates(res.s);
   return res;
 }
 
-template <typename fragment_t, typename value_t, class F, class M, class C>
-inline VSet edgeMapSparseFunction(const fragment_t& graph, VSet& U, int h, F& f,
+template <typename fragment_t, typename value_t, class F, class M, class C,
+          class H>
+VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, H& h, F& f, M& m,
+                     C& c) {
+  for (auto& vid : U.s) {
+    value_t v = *(U.fw->Get(vid));
+    auto es = use_edge(h);
+    for (auto& nb_id : es) {
+      value_t nb = *(U.fw->Get(nb_id));
+      if (c(nb_id, nb) && f(vid, nb_id, v, nb)) {
+        m(vid, nb_id, v, nb);
+        U.fw->PutNext(nb_id, nb);
+      }
+    }
+  }
+
+  VSet res;
+  U.fw->Barrier(true);
+  U.fw->GetActiveVerticesAndSetStates(res.s);
+  return res;
+}
+
+template <typename fragment_t, typename value_t, class F, class M, class C,
+          class H>
+inline VSet edgeMapSparseFunction(const fragment_t& graph, VSet& U, H h, F& f,
                                   M& m, C& c) {
   U.fw->ResetAggFunc();
   return doEdgeMapSparse(graph, U, h, f, m, c);
 }
 
 template <typename fragment_t, typename value_t, class F, class M, class C,
-          class R>
-inline VSet edgeMapSparseFunction(const fragment_t& graph, VSet& U, int h, F& f,
+          class R, class H>
+inline VSet edgeMapSparseFunction(const fragment_t& graph, VSet& U, H h, F& f,
                                   M& m, C& c, const R& r) {
   U.fw->SetAggFunc(r);
   return doEdgeMapSparse(graph, U, h, f, m, c);
   U.fw->ResetAggFunc();
 }
 
-template <typename fragment_t, typename value_t, class F, class M, class C>
-inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
+template <typename fragment_t, typename value_t, class F, class M, class C, class H>
+inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, H h, F& f, M& m,
                             C& c) {
   int len = VSize(U);
   if (len > THRESHOLD)
@@ -272,8 +337,8 @@ inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
 }
 
 template <typename fragment_t, typename value_t, class F, class M, class C,
-          class R>
-inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
+          class R, class H>
+inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, H h, F& f, M& m,
                             C& c, const R& r) {
   int len = VSize(U);
   if (len > THRESHOLD)
@@ -282,8 +347,9 @@ inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
     return edgeMapSparseFunction(graph, U, h, f, m, c, r);
 }
 
-template <typename fragment_t, typename value_t, class F, class M, class C>
-inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, int h, VSet& T,
+template <typename fragment_t, typename value_t, class F, class M, class C,
+          class H>
+inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, H h, VSet& T,
                             F& f, M& m, C& c, bool b = true) {
   return edgeMapDenseFunction(graph, U, h, T, f, m, c, b);
 }
