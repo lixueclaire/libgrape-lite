@@ -122,6 +122,27 @@ void CreateAndQuery(const CommSpec& comm_spec, const std::string& out_prefix,
                                   args...);                              
 }
 
+struct BFS_TYPE {
+  int dis; 
+};
+
+struct CC_TYPE {
+  int tag;
+};
+
+struct PR_TYPE {
+  int deg;
+  float val, next;
+};
+inline InArchive& operator<<(InArchive& in_archive, const PR_TYPE& v) {
+  in_archive << v.deg << v.val;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, PR_TYPE& v) {
+  out_archive >> v.deg >> v.val;
+  return out_archive;
+}
+
 void RunFlash() {
   CommSpec comm_spec;
   comm_spec.Init(MPI_COMM_WORLD);
@@ -151,9 +172,6 @@ void RunFlash() {
   int fnum = comm_spec.fnum();
 
   if (name == "bfs") {
-    struct BFS_TYPE {
-      int dis; 
-    };
     using GraphType =
         grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
                                         grape::EmptyType,
@@ -162,10 +180,6 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bfs_source);
   } else if (name == "pagerank") {
-    struct PR_TYPE {
-      int deg;
-      float val, next;
-    };
     using GraphType =
         grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
                                         grape::EmptyType,
@@ -174,9 +188,6 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_pr_mr, FLAGS_pr_d);
   } else if (name == "cc") {
-    struct CC_TYPE {
-      int tag;
-    };
     using GraphType =
         grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
                                         grape::EmptyType,
