@@ -53,6 +53,7 @@ namespace flash {
   auto F = [&](const vid_t sid, const vid_t did, const value_t& s, value_t& d)
 #define CTrueV cTrueV<vid_t, value_t>
 #define CTrueE cTrueE<vid_t, value_t>
+#define EjoinV(E, V) E, V
 
 template <typename vid_t, typename value_t>
 inline bool cTrueV(const vid_t id, const value_t& v) {

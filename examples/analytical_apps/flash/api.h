@@ -59,6 +59,67 @@ VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m) {
 }
 
 template <typename fragment_t, typename value_t, class F, class M, class C>
+VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, VSet& T,
+                          F& f, M& m, C& c, bool b = true) {
+  if ((&T) == (&All))
+    return edgeMapDenseFunction(graph, U, h, f, m, c, b);
+  using vertex_t = typename fragment_t::vertex_t;
+  using vid_t = typename fragment_t::vid_t;
+  bool flag = ((&U) == (&All));
+  if (!flag)
+    U.ToDense();
+
+  U.fw->ForEach(T.s.begin(), T.s.end(),
+                [&flag, &graph, &U, &h, &f, &m, &c, &b](int tid, typename fragment_t::vid_t vid) {
+                  vertex_t u;
+                  if (!graph.GetVertex(vid, u)) return;
+                  value_t v = *(U.fw->Get(vid));
+                  bool is_update = false;
+                  if (!c(vid, v))
+                    return;
+                  if (h == EU || h == ED) {
+                    auto es = graph.GetIncomingAdjList(u);
+                    for (auto& e : es) {
+                      vid_t nb_id = graph.GetId(e.get_neighbor());
+                      if (flag || U.IsIn(nb_id)) {
+                        value_t nb = *(U.fw->Get(nb_id));
+                        if (f(nb_id, vid, nb, v)) {
+                          m(nb_id, vid, nb, v);
+                          is_update = true;
+                          if (!c(vid, v))
+                            break;
+                        }
+                      }
+                    }
+                  }
+                  if (h == EU || h == ER) {
+                    auto es = graph.GetOutgoingAdjList(u);
+                    for (auto& e : es) {
+                      vid_t nb_id = graph.GetId(e.get_neighbor());
+                      if (flag || U.IsIn(nb_id)) {
+                        value_t nb = *(U.fw->Get(nb_id));
+                        if (f(nb_id, vid, nb, v)) {
+                          m(nb_id, vid, nb, v);
+                          is_update = true;
+                          if (!c(vid, v))
+                            break;
+                        }
+                      }
+                    }
+                  }
+                  if (is_update)
+                    U.fw->PutNextPull(vid, v, b, tid);
+                });
+
+  VSet res;
+  U.fw->Barrier();
+  res.is_dense = true;
+  U.fw->GetActiveVerticesAndSetStates(res.s, res.d);
+  return res;
+}
+
+
+template <typename fragment_t, typename value_t, class F, class M, class C>
 VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                           C& c, bool b = true) {
   using vertex_t = typename fragment_t::vertex_t;
@@ -219,6 +280,12 @@ inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
     return edgeMapDenseFunction(graph, U, h, f, m, c);
   else
     return edgeMapSparseFunction(graph, U, h, f, m, c, r);
+}
+
+template <typename fragment_t, typename value_t, class F, class M, class C>
+inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, int h, VSet& T,
+                            F& f, M& m, C& c, bool b = true) {
+  return edgeMapDenseFunction(graph, U, h, T, f, m, c, b);
 }
 
 }  // namespace flash
