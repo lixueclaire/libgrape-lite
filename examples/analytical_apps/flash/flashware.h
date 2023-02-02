@@ -63,7 +63,10 @@ class FlashWare : public Communicator, public ParallelEngine {
   inline value_t* Get(const vid_t& key);
   inline void PutNext(const vid_t& key, const value_t& value);
   inline void PutNextLocal(const vid_t& key, const value_t& value, const int& tid = 0);
-  inline void PutNextPull(const vid_t& key, const value_t& value, const int& tid = 0);
+  inline void PutNextPull(const vid_t& key,
+                          const value_t& value,
+                          const bool& b,
+                          const int& tid = 0);
   void Barrier(bool flag = false);
 
  public:
@@ -245,14 +248,17 @@ template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::PutNextLocal(
     const vid_t& key, const value_t& value, const int& tid) {
   states_[key] = value;
+  SetActive(key);
   SynchronizeCurrent(tid, key);
 }
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::PutNextPull(
-    const vid_t& key, const value_t& value, const int& tid) {
+    const vid_t& key, const value_t& value, const bool& b, const int& tid) {
   next_states_[key] = value;
-  SynchronizeNext(tid, key);
+  SetActive(key);
+  if (b)
+    SynchronizeNext(tid, key);
 }
 
 template <typename fragment_t, class value_t>
@@ -302,7 +308,6 @@ inline void FlashWare<fragment_t, value_t>::SynchronizeCurrent(
   for (int i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       SendCurrent(i, key, tid);
-  SetActive(key);
 }
 
 template <typename fragment_t, class value_t>
@@ -312,7 +317,6 @@ inline void FlashWare<fragment_t, value_t>::SynchronizeNext(
   for (int i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       SendNext(i, key, tid);
-  SetActive(key);
 }
 
 template <typename fragment_t, class value_t>

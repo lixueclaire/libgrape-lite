@@ -60,7 +60,7 @@ class PRFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 
     for (int i = 0; i < max_iters; i++) {
       Print("Round %d\n", i);
-      EdgeMapDense(All, ED, CTrueE, update, CTrueV);
+      EdgeMapDense(All, ED, CTrueE, update, CTrueV, false);
       VertexMap(All, CTrueV, local);
     }
 

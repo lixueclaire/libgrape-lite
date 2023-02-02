@@ -68,7 +68,7 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
     U.ToDense();
 
   U.fw->ForEach(graph.InnerVertices(),
-                [&flag, &graph, &U, &h, &f, &m, &c](int tid, vertex_t u) {
+                [&flag, &graph, &U, &h, &f, &m, &c, &b](int tid, vertex_t u) {
                   vid_t vid = graph.GetId(u);
                   value_t v = *(U.fw->Get(vid));
                   bool is_update = false;
@@ -105,7 +105,7 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                     }
                   }
                   if (is_update)
-                    U.fw->PutNextPull(vid, v, tid);
+                    U.fw->PutNextPull(vid, v, b, tid);
                 });
 
   VSet res;
