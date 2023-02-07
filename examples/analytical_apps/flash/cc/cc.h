@@ -39,7 +39,7 @@ class CCFlash : public FlashAppBase<FRAG_T, VALUE_T> {
   int* Res(value_t* v) { return &(v->tag); }
 
   void Run(const fragment_t& graph) {
-    int n_vertex = graph.GetTotalVerticesNum() + 1;
+    int n_vertex = graph.GetTotalVerticesNum();
     Print("Run CC with Flash, total vertices: %d\n", n_vertex);
     vset_t a = All;
 

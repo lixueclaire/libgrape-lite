@@ -64,8 +64,7 @@ class FlashWorker {
     MPI_Barrier(comm_spec_.comm());
 
     fw_ = new grape::flash::FlashWare<fragment_t, value_t>;
-    fw_->InitFlashWare(comm_spec_, graph_->GetTotalVerticesNum() + 1,
-                       app_->sync_all_, *graph_);
+    fw_->InitFlashWare(comm_spec_, app_->sync_all_, graph_);
     All.fw = fw_;
     std::vector<vid_t>* masters = fw_->GetMasters();
     for (auto it = masters->begin(); it != masters->end(); it++) {
@@ -89,10 +88,12 @@ class FlashWorker {
   void Output(std::ostream& os) {
     auto inner_vertices = graph_->InnerVertices();
     for (auto v : inner_vertices) {
-      vid_t id = graph_->GetId(v);
+      vid_t oid = graph_->GetId(v);
+      vid_t id = fw_->Lid2Key(v.GetValue());
       auto p = app_->Res(GetV(id));
-      if (p != nullptr)
-        os << id << " " << *p << std::endl;
+      if (p != nullptr) {
+        os << oid << " " << *p << std::endl;
+      }
     }
   }
 

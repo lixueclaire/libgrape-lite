@@ -40,9 +40,12 @@ class BFSFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 
   void Run(const fragment_t& graph, vid_t source) {
     Print("Run BFS with Flash, source = %d\n", source);
-    int n_vertex = graph.GetTotalVerticesNum() + 1;
+    int n_vertex = graph.GetTotalVerticesNum();
     Print("Total vertices: %d\n", n_vertex);
     vset_t a = All;
+    vid_t gid;
+    graph.GetVertexMap()->GetGid(source, gid);
+    source = All.fw->Gid2Key(gid);
 
     DefineMapV(init_v) { v.dis = (id == source) ? 0 : -1; };
     a = VertexMap(a, CTrueV, init_v);

@@ -30,8 +30,8 @@ namespace flash {
 #define EmptySet VertexSubset<fragment_t, value_t>::empty
 
 #define GetV(id) All.fw->Get(id)
-#define OutDeg(id) getOutDegree<fragment_t, vid_t>(graph, id)
-#define InDeg(id) getInDegree<fragment_t, vid_t>(graph, id)
+#define OutDeg(id) getOutDegree<fragment_t, vid_t>(graph, All.fw->Key2Lid(id))
+#define InDeg(id) getInDegree<fragment_t, vid_t>(graph, All.fw->Key2Lid(id))
 #define Deg(id) (OutDeg(id) + InDeg(id))
 #define Print(...)  if (All.fw->GetPid() == 0) printf(__VA_ARGS__)
 
@@ -71,20 +71,16 @@ inline bool cTrueE(const vid_t sid, const vid_t did, const value_t& s,
 }
 
 template <typename fragment_t, typename vid_t>
-inline int getOutDegree(const fragment_t& graph, vid_t vid) {
+inline int getOutDegree(const fragment_t& graph, vid_t lid) {
   Vertex<vid_t> v;
-  if (graph.GetVertex(vid, v))
-    return graph.GetLocalOutDegree(v);
-  else
-    return 0;
+  v.SetValue(lid);
+  return graph.GetLocalOutDegree(v);
 }
 template <typename fragment_t, typename vid_t>
-inline int getInDegree(const fragment_t& graph, vid_t vid) {
+inline int getInDegree(const fragment_t& graph, vid_t lid) {
   Vertex<vid_t> v;
-  if (graph.GetVertex(vid, v))
-    return graph.GetLocalInDegree(v);
-  else
-    return 0;
+  v.SetValue(lid);
+  return graph.GetLocalInDegree(v);
 }
 
 }  // namespace flash

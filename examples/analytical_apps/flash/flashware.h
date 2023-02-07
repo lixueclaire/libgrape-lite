@@ -38,6 +38,7 @@ class FlashWare : public Communicator, public ParallelEngine {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
+  using vertex_map_t = typename fragment_t::vertex_map_t;
   using value_t = VALUE_T;
 
   FlashWare() = default;
@@ -49,8 +50,8 @@ class FlashWare : public Communicator, public ParallelEngine {
   }
 
  public:
-  void InitFlashWare(const CommSpec& comm_spec, const vid_t& n_vertices,
-                     const bool& sync_all, const fragment_t& graph);
+  void InitFlashWare(const CommSpec& comm_spec, const bool& sync_all,
+                     std::shared_ptr<fragment_t> graph);
   void Start();
   void Terminate();
 
@@ -82,7 +83,35 @@ class FlashWare : public Communicator, public ParallelEngine {
   inline vid_t GetSize() { return n_; }
   inline std::vector<vid_t>* GetMasters() { return &masters_; }
   inline std::vector<vid_t>* GetMirrors() { return &mirrors_; }
-  inline int GetMasterPid(const vid_t& key) { return key % n_procs_; }
+  inline int GetMasterPid(const vid_t& key) {
+    vid_t gid = Key2Gid(key);
+    return vmap_->GetFidFromGid(gid);
+  }
+  inline vid_t Key2Gid(const vid_t& key) {
+    for (fid_t fid = 0; fid < n_procs_; fid++) {
+      if (key < agg_vnum_[fid] + vnum_[fid])
+        return vmap_->Lid2Gid(fid, Key2Lid(key, fid));
+    }
+    return 0;
+  }
+  inline vid_t Gid2Key(const vid_t& gid) {
+    fid_t pid = vmap_->GetFidFromGid(gid);
+    vid_t lid = vmap_->GetLidFromGid(gid);
+    return lid + agg_vnum_[pid];
+  }
+  inline vid_t Key2Lid(const vid_t& key, const fid_t& pid) {
+    return key - agg_vnum_[pid];
+  }
+  inline vid_t Lid2Key(const vid_t& lid, const fid_t& pid) {
+    return lid + agg_vnum_[pid];
+  }
+  inline vid_t Key2Lid(const vid_t& key) {
+    return key - agg_vnum_[pid_];
+  }
+  inline vid_t Lid2Key(const vid_t& lid) {
+    return lid + agg_vnum_[pid_];
+  }
+
   inline bool IsMaster(const vid_t& key) { return GetMasterPid(key) == pid_; }
   inline bool IsActive(const vid_t& key) { return is_active_.get_bit(key); }
   inline void SetActive(const vid_t& key) { is_active_.set_bit(key); }
@@ -118,6 +147,10 @@ class FlashWare : public Communicator, public ParallelEngine {
   Bitset is_active_;
   int step_;
 
+  std::shared_ptr<vertex_map_t> vmap_;
+  size_t* vnum_;
+  size_t* agg_vnum_;
+
   std::function<void(const vid_t, const vid_t, const value_t&, value_t&)>
       f_agg_;
   // static const int SEG = 32;
@@ -126,9 +159,8 @@ class FlashWare : public Communicator, public ParallelEngine {
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::InitFlashWare(const CommSpec& comm_spec,
-                                                   const vid_t& n_vertices,
                                                    const bool& sync_all,
-                                                   const fragment_t& graph) {
+                                                   std::shared_ptr<fragment_t> graph) {
   comm_spec_ = comm_spec;
   MPI_Barrier(comm_spec_.comm());
   InitParallelEngine();
@@ -141,11 +173,23 @@ void FlashWare<fragment_t, value_t>::InitFlashWare(const CommSpec& comm_spec,
   n_threads_ = thread_num();
   // seg_mutex_ = new std::mutex[SEG];
 
-  n_ = n_vertices;
-  n_loc_ = n_ / n_procs_ + (pid_ < (n_ % n_procs_) ? 1 : 0);
-  states_ = new value_t[n_];
-  next_states_ = new value_t[n_];
-  is_active_.init(n_);
+  vmap_ = graph->GetVertexMap();
+  n_ = graph->GetTotalVerticesNum();
+  n_loc_ = vmap_->GetInnerVertexSize(pid_);
+
+  vnum_ = new size_t[n_procs_];
+  agg_vnum_ = new size_t[n_procs_];
+  for (fid_t i = 0; i < n_procs_; i++) {
+    vnum_[i] = vmap_->GetInnerVertexSize(i);
+    if (i == 0)
+      agg_vnum_[i] = 0;
+    else
+      agg_vnum_[i] = agg_vnum_[i - 1] + vnum_[i - 1];
+  }
+
+  states_ = new value_t[n_ + 1];
+  next_states_ = new value_t[n_ + 1];
+  is_active_.init(n_ + 1);
 
   masters_.clear();
   mirrors_.clear();
@@ -157,11 +201,11 @@ void FlashWare<fragment_t, value_t>::InitFlashWare(const CommSpec& comm_spec,
 
   sync_all_ = sync_all;
   if (!sync_all_) {
-    nb_ids_.init(n_loc_ * n_procs_);
-    ForEach(graph.InnerVertices(),
+    nb_ids_.init((n_loc_ + 1) * n_procs_);
+    ForEach(graph->InnerVertices(),
             [this, &graph](int tid, typename fragment_t::vertex_t v) {
-              auto dsts = graph.IOEDests(v);
-              vid_t lid = graph.GetId(v) / n_procs_;
+              auto dsts = graph->IOEDests(v);
+              vid_t lid = v.GetValue();
               const fid_t* ptr = dsts.begin;
               while (ptr != dsts.end) {
                 fid_t fid = *(ptr++);
@@ -304,7 +348,7 @@ inline void FlashWare<fragment_t, value_t>::SendCurrent(
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SynchronizeCurrent(
     const int& tid, const vid_t& key) {
-  int x = key / n_procs_ * n_procs_;
+  int x = Key2Lid(key) * n_procs_;
   for (int i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       SendCurrent(i, key, tid);
@@ -313,7 +357,7 @@ inline void FlashWare<fragment_t, value_t>::SynchronizeCurrent(
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SynchronizeNext(
     const int& tid, const vid_t& key) {
-  int x = key / n_procs_ * n_procs_;
+  int x = Key2Lid(key) * n_procs_;
   for (int i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       SendNext(i, key, tid);
