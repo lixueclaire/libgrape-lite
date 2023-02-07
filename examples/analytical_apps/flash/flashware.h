@@ -79,25 +79,18 @@ class FlashWare : public Communicator, public ParallelEngine {
   inline void ResetAggFunc() { f_agg_ = nullptr; }
 
  public:
-  inline int GetPid() { return pid_; }
+  inline fid_t GetPid() { return pid_; }
   inline vid_t GetSize() { return n_; }
   inline std::vector<vid_t>* GetMasters() { return &masters_; }
   inline std::vector<vid_t>* GetMirrors() { return &mirrors_; }
   inline int GetMasterPid(const vid_t& key) {
-    vid_t gid = Key2Gid(key);
-    return vmap_->GetFidFromGid(gid);
+    return key2pid_[key];
   }
   inline vid_t Key2Gid(const vid_t& key) {
-    for (fid_t fid = 0; fid < n_procs_; fid++) {
-      if (key < agg_vnum_[fid] + vnum_[fid])
-        return vmap_->Lid2Gid(fid, Key2Lid(key, fid));
-    }
-    return 0;
+    return vmap_->Lid2Gid(key2pid_[key], Key2Lid(key, key2pid_[key]));
   }
   inline vid_t Gid2Key(const vid_t& gid) {
-    fid_t pid = vmap_->GetFidFromGid(gid);
-    vid_t lid = vmap_->GetLidFromGid(gid);
-    return lid + agg_vnum_[pid];
+    return Lid2Key(vmap_->GetLidFromGid(gid), vmap_->GetFidFromGid(gid));
   }
   inline vid_t Key2Lid(const vid_t& key, const fid_t& pid) {
     return key - agg_vnum_[pid];
@@ -132,7 +125,7 @@ class FlashWare : public Communicator, public ParallelEngine {
  private:
   vid_t n_;
   vid_t n_loc_;
-  int pid_;
+  fid_t pid_;
   int n_procs_;
   int n_threads_;
   std::vector<vid_t> masters_;
@@ -150,6 +143,7 @@ class FlashWare : public Communicator, public ParallelEngine {
   std::shared_ptr<vertex_map_t> vmap_;
   size_t* vnum_;
   size_t* agg_vnum_;
+  fid_t* key2pid_;
 
   std::function<void(const vid_t, const vid_t, const value_t&, value_t&)>
       f_agg_;
@@ -179,17 +173,20 @@ void FlashWare<fragment_t, value_t>::InitFlashWare(const CommSpec& comm_spec,
 
   vnum_ = new size_t[n_procs_];
   agg_vnum_ = new size_t[n_procs_];
-  for (fid_t i = 0; i < n_procs_; i++) {
-    vnum_[i] = vmap_->GetInnerVertexSize(i);
-    if (i == 0)
-      agg_vnum_[i] = 0;
+  key2pid_ = new fid_t[n_];
+  for (fid_t fid = 0; fid < n_procs_; fid++) {
+    vnum_[fid] = vmap_->GetInnerVertexSize(fid);
+    if (fid == 0)
+      agg_vnum_[fid] = 0;
     else
-      agg_vnum_[i] = agg_vnum_[i - 1] + vnum_[i - 1];
+      agg_vnum_[fid] = agg_vnum_[fid - 1] + vnum_[fid - 1];
+    for (vid_t key = agg_vnum_[fid]; key < agg_vnum_[fid] + vnum_[fid]; key++)
+      key2pid_[key] = fid;
   }
 
-  states_ = new value_t[n_ + 1];
-  next_states_ = new value_t[n_ + 1];
-  is_active_.init(n_ + 1);
+  states_ = new value_t[n_];
+  next_states_ = new value_t[n_];
+  is_active_.init(n_);
 
   masters_.clear();
   mirrors_.clear();

@@ -92,7 +92,7 @@ void VertexSubset<fragment_t, value_t>::ToDense() {
     return;
   is_dense = true;
   if (d.get_size() == 0)
-    d.init(fw->GetSize() + 1);
+    d.init(fw->GetSize());
   else
     d.parallel_clear(fw->GetThreadPool());
   fw->ForEach(s.begin(), s.end(),
