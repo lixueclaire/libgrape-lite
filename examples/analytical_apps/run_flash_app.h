@@ -39,11 +39,12 @@ limitations under the License.
 #endif
 
 #include "timer.h"
-#include "flags.h"
+#include "flash/flash_flags.h"
 #include "flash/flash_worker.h"
 #include "flash/bfs/bfs.h"
 #include "flash/cc/cc-opt.h"
 #include "flash/cc/cc.h"
+#include "flash/bc/bc.h"
 #include "flash/pagerank/pagerank.h"
 
 #ifndef __AFFINITY__
@@ -127,6 +128,11 @@ struct BFS_TYPE {
   int dis; 
 };
 
+struct BC_TYPE {
+  char d;
+  float b, c;
+};
+
 struct CC_TYPE {
   int tag;
 };
@@ -176,36 +182,28 @@ void RunFlash() {
   }
   int fnum = comm_spec.fnum();
 
-  if (name == "bfs") {
-    using GraphType =
+  using GraphType =
         grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
                                         grape::EmptyType,
                                         LoadStrategy::kBothOutIn>;
+  if (name == "bfs") {
     using AppType = grape::flash::BFSFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bfs_source);
   } else if (name == "pagerank") {
-    using GraphType =
-        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
-                                        grape::EmptyType,
-                                        LoadStrategy::kBothOutIn>;
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_pr_mr, FLAGS_pr_d);
   } else if (name == "cc") {
-    using GraphType =
-        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
-                                        grape::EmptyType,
-                                        LoadStrategy::kBothOutIn>;
     using AppType = grape::flash::CCFlash<GraphType, CC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "cc-opt") {
-    using GraphType =
-        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
-                                        grape::EmptyType,
-                                        LoadStrategy::kBothOutIn>;
     using AppType = grape::flash::CCOptFlash<GraphType, CC_OPT_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "bc") {
+    using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_bc_source);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;
   }

@@ -258,7 +258,7 @@ else ()
   endif ()
 
   if (WITH_FLASH)
-    add_executable(flash_analytical_apps examples/analytical_apps/flags.cc examples/analytical_apps/run_flash_app.cc)
+    add_executable(flash_analytical_apps examples/analytical_apps/flash/flash_flags.cc examples/analytical_apps/run_flash_app.cc)
     target_include_directories(flash_analytical_apps PRIVATE examples/analytical_apps)
     set_target_properties(flash_analytical_apps PROPERTIES OUTPUT_NAME run_flash_app)
     target_link_libraries(flash_analytical_apps grape-lite ${MPI_CXX_LIBRARIES}
