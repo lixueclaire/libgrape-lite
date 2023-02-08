@@ -112,8 +112,8 @@ class FlashWare : public Communicator, public ParallelEngine {
   inline void SetStates(const vid_t& key) { states_[key] = next_states_[key]; }
 
  private:
-  inline void SendNext(const int& pid, const vid_t& key, const int& tid);
-  inline void SendCurrent(const int& pid, const vid_t& key, const int& tid);
+  inline void SendNext(const fid_t& pid, const vid_t& key, const int& tid);
+  inline void SendCurrent(const fid_t& pid, const vid_t& key, const int& tid);
   inline void SynchronizeNext(const int& tid, const vid_t& key);
   inline void SynchronizeCurrent(const int& tid, const vid_t& key);
   inline void UpdateAllMirrors();
@@ -331,22 +331,22 @@ void FlashWare<fragment_t, value_t>::Barrier(bool flag) {
 
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SendNext(
-    const int& pid, const vid_t& key, const int& tid) {
+    const fid_t& pid, const vid_t& key, const int& tid) {
   messages_.SendVertexToFragment<vid_t, value_t>(pid, key, next_states_[key],
                                                  tid);
 }
 
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SendCurrent(
-    const int& pid, const vid_t& key, const int& tid) {
+    const fid_t& pid, const vid_t& key, const int& tid) {
   messages_.SendVertexToFragment<vid_t, value_t>(pid, key, states_[key], tid);
 }
 
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SynchronizeCurrent(
     const int& tid, const vid_t& key) {
-  int x = Key2Lid(key) * n_procs_;
-  for (int i = 0; i < n_procs_; i++)
+  vid_t x = Key2Lid(key) * n_procs_;
+  for (fid_t i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       SendCurrent(i, key, tid);
 }
@@ -354,8 +354,8 @@ inline void FlashWare<fragment_t, value_t>::SynchronizeCurrent(
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SynchronizeNext(
     const int& tid, const vid_t& key) {
-  int x = Key2Lid(key) * n_procs_;
-  for (int i = 0; i < n_procs_; i++)
+  vid_t x = Key2Lid(key) * n_procs_;
+  for (fid_t i = 0; i < n_procs_; i++)
     if (i != pid_ && (sync_all_ || (nb_ids_.get_bit(x + i))))
       SendNext(i, key, tid);
 }
