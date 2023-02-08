@@ -42,6 +42,7 @@ limitations under the License.
 #include "flags.h"
 #include "flash/flash_worker.h"
 #include "flash/bfs/bfs.h"
+#include "flash/cc/cc-opt.h"
 #include "flash/cc/cc.h"
 #include "flash/pagerank/pagerank.h"
 
@@ -130,6 +131,10 @@ struct CC_TYPE {
   int tag;
 };
 
+struct CC_OPT_TYPE {
+  long long cid;
+};
+
 struct PR_TYPE {
   int deg;
   float val, next;
@@ -193,6 +198,13 @@ void RunFlash() {
                                         grape::EmptyType,
                                         LoadStrategy::kBothOutIn>;
     using AppType = grape::flash::CCFlash<GraphType, CC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cc-opt") {
+    using GraphType =
+        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
+                                        grape::EmptyType,
+                                        LoadStrategy::kBothOutIn>;
+    using AppType = grape::flash::CCOptFlash<GraphType, CC_OPT_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;

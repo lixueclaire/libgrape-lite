@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_CC_H_
-#define EXAMPLES_ANALYTICAL_APPS_FLASH_CC_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_CC_OPT_H_
+#define EXAMPLES_ANALYTICAL_APPS_FLASH_CC_OPT_H_
 
 #include <grape/grape.h>
 
@@ -26,7 +26,7 @@ namespace grape {
 namespace flash {
 
 template <typename FRAG_T, typename VALUE_T>
-class CCFlash : public FlashAppBase<FRAG_T, VALUE_T> {
+class CCOptFlash : public FlashAppBase<FRAG_T, VALUE_T> {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
@@ -36,35 +36,46 @@ class CCFlash : public FlashAppBase<FRAG_T, VALUE_T> {
   using vset_t = VertexSubset<fragment_t, value_t>;
   bool sync_all_ = false;
 
-  int* Res(value_t* v) { return &(v->tag); }
+  long long* Res(value_t* v) { return &(v->cid); }
 
   void Run(const fragment_t& graph) {
     int n_vertex = graph.GetTotalVerticesNum();
     Print("Run CC with Flash, total vertices: %d\n", n_vertex);
-    vset_t a = All;
+   	long long v_loc = 0, v_glb = 0;
+	
+	  DefineMapV(init) {
+		  v.cid = Deg(id) * (long long) n_vertex + id; 
+		  v_loc = std::max(v_loc, v.cid);
+	  };
+	  DefineFV(filter) { return v.cid == v_glb; };
 
-    DefineMapV(init_v) { v.tag = id; };
-    a = VertexMap(a, CTrueV, init_v);
-    // std::cout << "-Local Init: " << a.fw->GetPid() << ' ' << a.s.size() << ' '
-    //          << VSize(a) << std::endl;
+	  VertexMap(All, CTrueV, init);
+    GetMax(v_loc, v_glb);;
+	  vset_t A = VertexMap(All, filter);
 
-    DefineFE(check) { return s.tag < d.tag; };
-    DefineMapE(update) { d.tag = std::min(s.tag, d.tag); };
+	  DefineFV(cond) { return v.cid != v_glb; };
+	  DefineMapE(update) { d.cid = v_glb; };
+	  DefineMapE(reduce) { d = s; };
 
-    for (int len = VSize(a), i = 1; len > 0; len = VSize(a), ++i) {
-      // Print("Round %d (Dense): size = %d\n", i, len);
-      // a = EdgeMapDense(a, EU, check, update, CTrueV);
+	  for(int len = VSize(A), i = 0; len > 0; len = VSize(A), ++i) {
+		  Print("Round 0.%d: size=%d\n", i, len);
+		  A = EdgeMap(A, EU, CTrueE, update, cond, reduce);
+	  }
 
-      // Print("Round %d (Sparse): size = %d\n", i, len);
-      // a = EdgeMapSparse(a, EU, check, update, CTrueV, update);
+	  DefineFV(filter2) { return v.cid != v_glb; };
+	  A = VertexMap(All, filter2);
 
-      Print("Round %d: size = %d\n", i, len);
-      a = EdgeMap(a, EU, check, update, CTrueV, update);
-    }
+	  DefineFE(check2) { return s.cid > d.cid; };
+	  DefineMapE(update2) { d.cid = std::max(d.cid, s.cid); };
+
+	  for(int len = VSize(A), i = 0; len > 0; len = VSize(A),++i) {
+		  Print("Round 1.%d: size=%d\n", i, len);
+		  A = EdgeMap(A, EU, check2, update2, CTrueV, update2);
+	  }
   }
 };
 
 }  // namespace flash
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_CC_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_CC_OPT_H_

@@ -28,6 +28,9 @@ namespace flash {
 #define VSet VertexSubset<fragment_t, value_t>
 #define All VertexSubset<fragment_t, value_t>::all
 #define EmptySet VertexSubset<fragment_t, value_t>::empty
+#define GetMax(A, B) All.fw->Max(A, B)
+#define GetMin(A, B) All.fw->Min(A, B)
+#define GetSum(A, B) All.fw->Sum(A, B)
 
 #define GetV(id) All.fw->Get(id)
 #define OutDeg(id) getOutDegree<fragment_t, vid_t>(graph, All.fw->Key2Lid(id))
