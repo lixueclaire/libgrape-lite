@@ -47,6 +47,8 @@ limitations under the License.
 #include "flash/bc/bc.h"
 #include "flash/mis/mis.h"
 #include "flash/mis/mis-2.h"
+#include "flash/mm/mm-opt.h"
+#include "flash/mm/mm.h"
 #include "flash/pagerank/pagerank.h"
 
 #ifndef __AFFINITY__
@@ -173,6 +175,10 @@ struct MIS_2_TYPE {
   bool d, b;
 };
 
+struct MM_TYPE {
+  int32_t p, s;
+};
+
 void RunFlash() {
   CommSpec comm_spec;
   comm_spec.Init(MPI_COMM_WORLD);
@@ -228,6 +234,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "mis-2") {
     using AppType = grape::flash::MIS2Flash<GraphType, MIS_2_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "mm") {
+    using AppType = grape::flash::MMFlash<GraphType, MM_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "mm-opt") {
+    using AppType = grape::flash::MMOptFlash<GraphType, MM_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;

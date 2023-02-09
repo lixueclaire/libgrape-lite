@@ -51,18 +51,18 @@ namespace flash {
 #define DefineMapV(F) auto F = [&](const vid_t id, value_t& v)
 #define DefineFE(F)                                                \
   auto F = [&](const vid_t sid, const vid_t did, const value_t& s, \
-               const value_t& d, const edata_t& weight = edata_t()) -> bool
+               const value_t& d, const edata_t& weight) -> bool
 #define DefineMapE(F) \
   auto F = [&](const vid_t sid, const vid_t did, const value_t& s, \
-               value_t& d, const edata_t& weight = edata_t())
+               value_t& d, const edata_t& weight)
 #define CTrueV cTrueV<vid_t, value_t>
 #define CTrueE cTrueE<vid_t, value_t, edata_t>
 
 #define EjoinV(E, V) E, V
 #define VjoinP(property) std::vector<vid_t> res; res.push_back(v.property); return res;
-#define DefineOutEdges(F) auto F=[&](value_t& v) -> std::vector<vid_t>
-#define DefineInEdges(F) auto F=[&](value_t& v) -> std::vector<vid_t>
-#define use_edge(F) F(v)
+#define DefineOutEdges(F) auto F=[&](const vid_t vid, const value_t& v) -> std::vector<vid_t>
+#define DefineInEdges(F) auto F=[&](const vid_t vid, const value_t& v) -> std::vector<vid_t>
+#define use_edge(F) F(vid, v)
 
 template <typename vid_t, typename value_t>
 inline bool cTrueV(const vid_t id, const value_t& v) {
@@ -70,7 +70,7 @@ inline bool cTrueV(const vid_t id, const value_t& v) {
 }
 template <typename vid_t, typename value_t, typename edata_t>
 inline bool cTrueE(const vid_t sid, const vid_t did, const value_t& s,
-                   const value_t& d, const edata_t& weight = edata_t()) {
+                   const value_t& d, const edata_t& weight) {
   return true;
 }
 
