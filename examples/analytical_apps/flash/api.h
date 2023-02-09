@@ -77,15 +77,17 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, VSet& T,
                   bool is_update = false;
                   if (!c(vid, v))
                     return;
+                  vid_t nb_id;
+                  value_t nb;
                   if (h == EU || h == ED) {
                     auto es = graph.GetIncomingAdjList(u);
                     for (auto& e : es) {
-                      vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+                      nb_id = graph.Vertex2Gid(e.get_neighbor());
                       nb_id = U.fw->Gid2Key(nb_id);
                       if (flag || U.IsIn(nb_id)) {
-                        value_t nb = *(U.fw->Get(nb_id));
-                        if (f(nb_id, vid, nb, v)) {
-                          m(nb_id, vid, nb, v);
+                        nb = *(U.fw->Get(nb_id));
+                        if (f(nb_id, vid, nb, v, e.get_data())) {
+                          m(nb_id, vid, nb, v, e.get_data());
                           is_update = true;
                           if (!c(vid, v))
                             break;
@@ -96,12 +98,12 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, VSet& T,
                   if (h == EU || h == ER) {
                     auto es = graph.GetOutgoingAdjList(u);
                     for (auto& e : es) {
-                      vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+                      nb_id = graph.Vertex2Gid(e.get_neighbor());
                       nb_id = U.fw->Gid2Key(nb_id);
                       if (flag || U.IsIn(nb_id)) {
-                        value_t nb = *(U.fw->Get(nb_id));
-                        if (f(nb_id, vid, nb, v)) {
-                          m(nb_id, vid, nb, v);
+                        nb = *(U.fw->Get(nb_id));
+                        if (f(nb_id, vid, nb, v, e.get_data())) {
+                          m(nb_id, vid, nb, v, e.get_data());
                           is_update = true;
                           if (!c(vid, v))
                             break;
@@ -136,15 +138,17 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                   bool is_update = false;
                   if (!c(vid, v))
                     return;
+                  vid_t nb_id;
+                  value_t nb;
                   if (h == EU || h == ED) {
                     auto es = graph.GetIncomingAdjList(u);
                     for (auto& e : es) {
-                      vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+                      nb_id = graph.Vertex2Gid(e.get_neighbor());
                       nb_id = U.fw->Gid2Key(nb_id);
                       if (flag || U.IsIn(nb_id)) {
-                        value_t nb = *(U.fw->Get(nb_id));
-                        if (f(nb_id, vid, nb, v)) {
-                          m(nb_id, vid, nb, v);
+                        nb = *(U.fw->Get(nb_id));
+                        if (f(nb_id, vid, nb, v, e.get_data())) {
+                          m(nb_id, vid, nb, v, e.get_data());
                           is_update = true;
                           if (!c(vid, v))
                             break;
@@ -155,12 +159,12 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, int h, F& f, M& m,
                   if (h == EU || h == ER) {
                     auto es = graph.GetOutgoingAdjList(u);
                     for (auto& e : es) {
-                      vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+                      nb_id = graph.Vertex2Gid(e.get_neighbor());
                       nb_id = U.fw->Gid2Key(nb_id);
                       if (flag || U.IsIn(nb_id)) {
-                        value_t nb = *(U.fw->Get(nb_id));
-                        if (f(nb_id, vid, nb, v)) {
-                          m(nb_id, vid, nb, v);
+                        nb = *(U.fw->Get(nb_id));
+                        if (f(nb_id, vid, nb, v, e.get_data())) {
+                          m(nb_id, vid, nb, v, e.get_data());
                           is_update = true;
                           if (!c(vid, v))
                             break;
@@ -193,10 +197,11 @@ VSet edgeMapDenseFunction(const fragment_t& graph, VSet& U, H& h, VSet& T,
                   bool is_update = false;
                   if (!c(vid, v))
                     return;
+                  value_t nb;
                   auto es = use_edge(h);
                   for (auto& nb_id : es) {
                     if (flag || U.IsIn(nb_id)) {
-                      value_t nb = *(U.fw->Get(nb_id));
+                      nb = *(U.fw->Get(nb_id));
                       if (f(nb_id, vid, nb, v)) {
                         m(nb_id, vid, nb, v);
                         is_update = true;
@@ -232,14 +237,16 @@ VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, int h, F& f, M& m,
     vertex_t u;
     u.SetValue(U.fw->Key2Lid(vid));
     value_t v = *(U.fw->Get(vid));
+    vid_t nb_id;
+    value_t nb;
     if (h == EU || h == ED) {
       auto es = graph.GetOutgoingAdjList(u);
       for (auto& e : es) {
-        vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+        nb_id = graph.Vertex2Gid(e.get_neighbor());
         nb_id = U.fw->Gid2Key(nb_id);
-        value_t nb = *(U.fw->Get(nb_id));
-        if (c(nb_id, nb) && f(vid, nb_id, v, nb)) {
-          m(vid, nb_id, v, nb);
+        nb = *(U.fw->Get(nb_id));
+        if (c(nb_id, nb) && f(vid, nb_id, v, nb, e.get_data())) {
+          m(vid, nb_id, v, nb, e.get_data());
           U.fw->PutNext(nb_id, nb);
         }
       }
@@ -247,11 +254,11 @@ VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, int h, F& f, M& m,
     if (h == EU || h == ER) {
       auto es = graph.GetIncomingAdjList(u);
       for (auto& e : es) {
-        vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+        nb_id = graph.Vertex2Gid(e.get_neighbor());
         nb_id = U.fw->Gid2Key(nb_id);
-        value_t nb = *(U.fw->Get(nb_id));
-        if (c(nb_id, nb) && f(vid, nb_id, v, nb)) {
-          m(vid, nb_id, v, nb);
+        nb = *(U.fw->Get(nb_id));
+        if (c(nb_id, nb) && f(vid, nb_id, v, nb, e.get_data())) {
+          m(vid, nb_id, v, nb, e.get_data());
           U.fw->PutNext(nb_id, nb);
         }
       }
@@ -261,15 +268,17 @@ VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, int h, F& f, M& m,
   /*U.fw->ForEach(U.s.begin(), U.s.end(), [&graph, &U, &h, &f, &m, &c](int tid, vid_t vid) { 
     vertex_t u;
     u.SetValue(U.fw->Key2Lid(vid));
-    value_t v = *(U.fw->Get(vid)); 
+    value_t v = *(U.fw->Get(vid));
+    vid_t nb_id;
+    value_t nb;
     if (h == EU || h == ED) {
-      auto es = graph.GetOutgoingAdjList(u); 
+      auto es = graph.GetOutgoingAdjList(u);
       for (auto &e: es) { 
-        vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+        nb_id = graph.Vertex2Gid(e.get_neighbor());
         nb_id = U.fw->Gid2Key(nb_id);
-        value_t nb = *(U.fw->Get(nb_id)); 
-        if (c(nb_id, nb) && f(vid, nb_id, v, nb)) {
-           m(vid, nb_id, v, nb); 
+        nb = *(U.fw->Get(nb_id));
+        if (c(nb_id, nb) && f(vid, nb_id, v, nb, e.get_data())) {
+           m(vid, nb_id, v, nb);
            U.fw->PutNext(nb_id, nb);
         }
       }
@@ -277,10 +286,10 @@ VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, int h, F& f, M& m,
     if (h == EU || h == ER) {
       auto es = graph.GetIncomingAdjList(u);
       for (auto &e: es) {
-        vid_t nb_id = graph.Vertex2Gid(e.get_neighbor());
+        nb_id = graph.Vertex2Gid(e.get_neighbor());
         nb_id = U.fw->Gid2Key(nb_id);
-        value_t nb = *(U.fw->Get(nb_id));
-        if (c(nb_id, nb) && f(vid, nb_id, v, nb)) {
+        nb = *(U.fw->Get(nb_id));
+        if (c(nb_id, nb) && f(vid, nb_id, v, nb, e.get_data())) {
           m(vid, nb_id, v, nb);
           U.fw->PutNext(nb_id, nb);
         }
@@ -301,8 +310,9 @@ VSet doEdgeMapSparse(const fragment_t& graph, VSet& U, H& h, F& f, M& m,
   for (auto& vid : U.s) {
     value_t v = *(U.fw->Get(vid));
     auto es = use_edge(h);
+    value_t nb;
     for (auto& nb_id : es) {
-      value_t nb = *(U.fw->Get(nb_id));
+      nb = *(U.fw->Get(nb_id));
       if (c(nb_id, nb) && f(vid, nb_id, v, nb)) {
         m(vid, nb_id, v, nb);
         U.fw->PutNext(nb_id, nb);

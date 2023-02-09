@@ -32,6 +32,8 @@ class CCFlash : public FlashAppBase<FRAG_T, VALUE_T> {
   using vid_t = typename fragment_t::vid_t;
   using vertex_t = typename fragment_t::vertex_t;
   using value_t = VALUE_T;
+  using vdata_t = typename fragment_t::vdata_t;
+  using edata_t = typename fragment_t::edata_t;
   using adj_list_t = typename fragment_t::adj_list_t;
   using vset_t = VertexSubset<fragment_t, value_t>;
   bool sync_all_ = false;

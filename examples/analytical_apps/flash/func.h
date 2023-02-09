@@ -51,11 +51,12 @@ namespace flash {
 #define DefineMapV(F) auto F = [&](const vid_t id, value_t& v)
 #define DefineFE(F)                                                \
   auto F = [&](const vid_t sid, const vid_t did, const value_t& s, \
-               const value_t& d) -> bool
+               const value_t& d, const edata_t& weight = edata_t()) -> bool
 #define DefineMapE(F) \
-  auto F = [&](const vid_t sid, const vid_t did, const value_t& s, value_t& d)
+  auto F = [&](const vid_t sid, const vid_t did, const value_t& s, \
+               value_t& d, const edata_t& weight = edata_t())
 #define CTrueV cTrueV<vid_t, value_t>
-#define CTrueE cTrueE<vid_t, value_t>
+#define CTrueE cTrueE<vid_t, value_t, edata_t>
 
 #define EjoinV(E, V) E, V
 #define VjoinP(property) std::vector<vid_t> res; res.push_back(v.property); return res;
@@ -67,9 +68,9 @@ template <typename vid_t, typename value_t>
 inline bool cTrueV(const vid_t id, const value_t& v) {
   return true;
 }
-template <typename vid_t, typename value_t>
+template <typename vid_t, typename value_t, typename edata_t>
 inline bool cTrueE(const vid_t sid, const vid_t did, const value_t& s,
-                   const value_t& d) {
+                   const value_t& d, const edata_t& weight = edata_t()) {
   return true;
 }
 

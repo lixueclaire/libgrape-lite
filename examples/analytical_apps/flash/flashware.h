@@ -38,6 +38,7 @@ class FlashWare : public Communicator, public ParallelEngine {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
+  using edata_t = typename fragment_t::edata_t;
   using vertex_map_t = typename fragment_t::vertex_map_t;
   using value_t = VALUE_T;
 
@@ -73,7 +74,7 @@ class FlashWare : public Communicator, public ParallelEngine {
  public:
   inline void SetAggFunc(
       const std::function<void(const vid_t, const vid_t, const value_t&,
-                               value_t&)>& f_agg) {
+                               value_t&, const edata_t&)>& f_agg) {
     f_agg_ = f_agg;
   }
   inline void ResetAggFunc() { f_agg_ = nullptr; }
@@ -145,7 +146,7 @@ class FlashWare : public Communicator, public ParallelEngine {
   size_t* agg_vnum_;
   fid_t* key2pid_;
 
-  std::function<void(const vid_t, const vid_t, const value_t&, value_t&)>
+  std::function<void(const vid_t, const vid_t, const value_t&, value_t&, const edata_t&)>
       f_agg_;
   // static const int SEG = 32;
   // std::mutex* seg_mutex_;
@@ -311,7 +312,7 @@ void FlashWare<fragment_t, value_t>::PutNext(const vid_t& key,
     next_states_[key] = states_[key];
   }
   if (f_agg_ != nullptr)
-    f_agg_(key, key, value, next_states_[key]);
+    f_agg_(key, key, value, next_states_[key], edata_t());
   else
     next_states_[key] = value;
   // seg_mutex_[key % SEG].unlock();
@@ -387,7 +388,7 @@ inline void FlashWare<fragment_t, value_t>::ProcessMasterMessage(
   if (f_agg_ == nullptr)
     next_states_[key] = value;
   else
-    f_agg_(key, key, value, next_states_[key]);
+    f_agg_(key, key, value, next_states_[key], edata_t());
 }
 
 template <typename fragment_t, class value_t>
