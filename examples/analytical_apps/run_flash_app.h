@@ -45,6 +45,8 @@ limitations under the License.
 #include "flash/cc/cc-opt.h"
 #include "flash/cc/cc.h"
 #include "flash/bc/bc.h"
+#include "flash/mis/mis.h"
+#include "flash/mis/mis-2.h"
 #include "flash/pagerank/pagerank.h"
 
 #ifndef __AFFINITY__
@@ -138,7 +140,7 @@ struct CC_TYPE {
 };
 
 struct CC_OPT_TYPE {
-  long long cid;
+  int64_t cid;
 };
 
 struct PR_TYPE {
@@ -153,6 +155,23 @@ inline OutArchive& operator>>(OutArchive& out_archive, PR_TYPE& v) {
   out_archive >> v.deg >> v.val;
   return out_archive;
 }
+
+struct MIS_TYPE {
+  bool d, b;
+  int64_t r;
+};
+inline InArchive& operator<<(InArchive& in_archive, const MIS_TYPE& v) {
+  in_archive << v.d << v.r;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, MIS_TYPE& v) {
+  out_archive >> v.d >> v.r;
+  return out_archive;
+}
+
+struct MIS_2_TYPE {
+  bool d, b;
+};
 
 void RunFlash() {
   CommSpec comm_spec;
@@ -204,6 +223,12 @@ void RunFlash() {
     using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bc_source);
+  } else if (name == "mis") {
+    using AppType = grape::flash::MISFlash<GraphType, MIS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "mis-2") {
+    using AppType = grape::flash::MIS2Flash<GraphType, MIS_2_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;
   }

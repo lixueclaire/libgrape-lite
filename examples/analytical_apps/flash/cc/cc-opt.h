@@ -38,7 +38,7 @@ class CCOptFlash : public FlashAppBase<FRAG_T, VALUE_T> {
   using vset_t = VertexSubset<fragment_t, value_t>;
   bool sync_all_ = false;
 
-  long long* Res(value_t* v) { return &(v->cid); }
+  int64_t* Res(value_t* v) { return &(v->cid); }
 
   void Run(const fragment_t& graph) {
     int n_vertex = graph.GetTotalVerticesNum();
