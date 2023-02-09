@@ -64,7 +64,10 @@ class FlashWare : public Communicator, public ParallelEngine {
 
   inline value_t* Get(const vid_t& key);
   inline void PutNext(const vid_t& key, const value_t& value);
-  inline void PutNextLocal(const vid_t& key, const value_t& value, const int& tid = 0);
+  inline void PutNextLocal(const vid_t& key,
+                           const value_t& value,
+                           const bool& b,
+                           const int& tid = 0);
   inline void PutNextPull(const vid_t& key,
                           const value_t& value,
                           const bool& b,
@@ -288,10 +291,11 @@ inline value_t* FlashWare<fragment_t, value_t>::Get(const vid_t& key) {
 
 template <typename fragment_t, class value_t>
 void FlashWare<fragment_t, value_t>::PutNextLocal(
-    const vid_t& key, const value_t& value, const int& tid) {
+    const vid_t& key, const value_t& value, const bool& b, const int& tid) {
   states_[key] = value;
   SetActive(key);
-  SynchronizeCurrent(tid, key);
+  if (b)
+    SynchronizeCurrent(tid, key);
 }
 
 template <typename fragment_t, class value_t>

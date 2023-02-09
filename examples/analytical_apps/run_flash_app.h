@@ -50,6 +50,9 @@ limitations under the License.
 #include "flash/mm/mm-opt.h"
 #include "flash/mm/mm.h"
 #include "flash/pagerank/pagerank.h"
+#include "flash/triangle/triangle.h"
+#include "flash/k-core/k-core.h"
+#include "flash/color/color.h"
 
 #ifndef __AFFINITY__
 #define __AFFINITY__ false
@@ -179,6 +182,37 @@ struct MM_TYPE {
   int32_t p, s;
 };
 
+struct K_CORE_TYPE {
+  int32_t d;
+};
+
+struct TRIANGLE_TYPE {
+  int32_t deg, count;
+  std::set<int32_t> out;
+};
+inline InArchive& operator<<(InArchive& in_archive, const TRIANGLE_TYPE& v) {
+  in_archive << v.deg << v.out;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, TRIANGLE_TYPE& v) {
+  out_archive >> v.deg >> v.out;
+  return out_archive;
+}
+
+struct COLOR_TYPE {
+  short c, cc;
+  int32_t deg;
+  std::vector<int> colors;
+};
+inline InArchive& operator<<(InArchive& in_archive, const COLOR_TYPE& v) {
+  in_archive << v.c << v.deg;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, COLOR_TYPE& v) {
+  out_archive >> v.c >> v.deg;
+  return out_archive;
+}
+
 void RunFlash() {
   CommSpec comm_spec;
   comm_spec.Init(MPI_COMM_WORLD);
@@ -240,6 +274,16 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "mm-opt") {
     using AppType = grape::flash::MMOptFlash<GraphType, MM_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "k-core") {
+    using AppType = grape::flash::KCoreFlash<GraphType, K_CORE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_kc_k);
+  } else if (name == "color") {
+    using AppType = grape::flash::ColorFlash<GraphType, COLOR_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "triangle") {
+    using AppType = grape::flash::TriangleFlash<GraphType, TRIANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;

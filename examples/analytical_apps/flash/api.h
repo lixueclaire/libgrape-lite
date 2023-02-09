@@ -33,14 +33,14 @@ VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f) {
 }
 
 template <typename fragment_t, typename value_t, class F, class M>
-VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m) {
+VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = true) {
   U.fw->ForEach(U.s.begin(), U.s.end(),
-                [&U, &f, &m](int tid, typename fragment_t::vid_t key) {
+                [&U, &f, &m, &b](int tid, typename fragment_t::vid_t key) {
                   value_t v = *(U.fw->Get(key));
                   if (!f(key, v))
                     return;
                   m(key, v);
-                  U.fw->PutNextLocal(key, v, tid);
+                  U.fw->PutNextLocal(key, v, b, tid);
                 });
   VSet res;
   U.fw->Barrier();

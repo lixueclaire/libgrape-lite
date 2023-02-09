@@ -64,6 +64,13 @@ namespace flash {
 #define DefineInEdges(F) auto F=[&](const vid_t vid, const value_t& v) -> std::vector<vid_t>
 #define use_edge(F) F(vid, v)
 
+template <class T> int set_intersect(const std::vector<T> &x,
+                                     const std::vector<T> &y,
+                                     std::vector<T> &v) {
+  auto it = set_intersection(x.begin(), x.end(), y.begin(), y.end(), v.begin());
+  return it - v.begin();
+}
+
 template <typename vid_t, typename value_t>
 inline bool cTrueV(const vid_t id, const value_t& v) {
   return true;
