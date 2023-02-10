@@ -45,16 +45,22 @@ VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = tr
   VSet res;
   U.fw->Barrier();
   U.fw->GetActiveVertices(res.s);
-  //U.fw->GetActiveVerticesAndSetStates(res.s);
-  /*for (auto &key : U.s) {
-    if (f(key, *(U.fw->Get(key)))) {
-      m(key, U.fw->states_[key]);
-      U.fw->next_states_[key] = U.fw->states_[key];
-      U.fw->Synchronize(key);
+  return res;
+}
+
+template <typename fragment_t, typename value_t, class F, class M>
+VSet vertexMapSeqFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = true) {
+  VSet res;
+  for (auto &key : U.s) {
+    value_t v = *(U.fw->Get(key));
+    if (f(key, v)) {
+      m(key, v);
+      U.fw->PutNextLocal(key, v, b);
       res.s.push_back(key);
-    }
+      U.fw->ResetActive(key);
+    }           
   }
-  U.fw->Barrier();*/
+  U.fw->Barrier();
   return res;
 }
 

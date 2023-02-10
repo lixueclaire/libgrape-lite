@@ -38,8 +38,29 @@ namespace flash {
 #define Deg(id) (OutDeg(id) + InDeg(id))
 #define Print(...)  if (All.fw->GetPid() == 0) printf(__VA_ARGS__)
 
+#define for_in(...) { vertex_t u; \
+                      u.SetValue(All.fw->Key2Lid(id)); \
+                      auto es = graph.GetIncomingAdjList(u); \
+                      for (auto& e : es) { \
+                        vid_t nb_id = graph.Vertex2Gid(e.get_neighbor()); \
+                        nb_id = All.fw->Gid2Key(nb_id); \
+                        value_t nb = *(All.fw->Get(nb_id)); \
+                        __VA_ARGS__; \
+                      } }
+#define for_out(...) {vertex_t u; \
+                      u.SetValue(All.fw->Key2Lid(id)); \
+                      auto es = graph.GetOutgoingAdjList(u); \
+                      for (auto& e : es) { \
+                        vid_t nb_id = graph.Vertex2Gid(e.get_neighbor()); \
+                        nb_id = All.fw->Gid2Key(nb_id); \
+                        value_t nb = *(All.fw->Get(nb_id)); \
+                        __VA_ARGS__; \
+                      } }
+#define for_nb(...) {for_in(__VA_ARGS__) for_out(__VA_ARGS__)}
+
 #define VSize(U) U.size()
 #define VertexMap(U, f, ...) vertexMapFunction(graph, U, f, ##__VA_ARGS__)
+#define VertexMapSeq(U, f, ...) vertexMapSeqFunction(graph, U, f, ##__VA_ARGS__)
 #define EdgeMap(U, H, F, M, C, ...) \
   edgeMapFunction(graph, U, H, F, M, C, ##__VA_ARGS__)
 #define EdgeMapDense(U, H, F, M, C, ...) \

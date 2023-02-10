@@ -51,7 +51,9 @@ limitations under the License.
 #include "flash/mm/mm.h"
 #include "flash/pagerank/pagerank.h"
 #include "flash/triangle/triangle.h"
-#include "flash/k-core/k-core.h"
+#include "flash/k-core/k-core-search.h"
+#include "flash/k-core/core.h"
+#include "flash/k-core/core-2.h"
 #include "flash/color/color.h"
 
 #ifndef __AFFINITY__
@@ -186,6 +188,32 @@ struct K_CORE_TYPE {
   int32_t d;
 };
 
+struct CORE_TYPE {
+  short core;
+  int cnt;
+  std::vector<short> s;
+};
+inline InArchive& operator<<(InArchive& in_archive, const CORE_TYPE& v) {
+  in_archive << v.core;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, CORE_TYPE& v) {
+  out_archive >> v.core;
+  return out_archive;
+}
+
+struct CORE_2_TYPE {
+  short core, old;
+};
+inline InArchive& operator<<(InArchive& in_archive, const CORE_2_TYPE& v) {
+  in_archive << v.core;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, CORE_2_TYPE& v) {
+  out_archive >> v.core;
+  return out_archive;
+}
+
 struct TRIANGLE_TYPE {
   int32_t deg, count;
   std::set<int32_t> out;
@@ -275,10 +303,16 @@ void RunFlash() {
   } else if (name == "mm-opt") {
     using AppType = grape::flash::MMOptFlash<GraphType, MM_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
-  } else if (name == "k-core") {
-    using AppType = grape::flash::KCoreFlash<GraphType, K_CORE_TYPE>;
+  } else if (name == "k-core-search") {
+    using AppType = grape::flash::KCoreSearchFlash<GraphType, K_CORE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_kc_k);
+  } else if (name == "core") {
+    using AppType = grape::flash::CoreFlash<GraphType, CORE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "core-2") {
+    using AppType = grape::flash::Core2Flash<GraphType, CORE_2_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "color") {
     using AppType = grape::flash::ColorFlash<GraphType, COLOR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);

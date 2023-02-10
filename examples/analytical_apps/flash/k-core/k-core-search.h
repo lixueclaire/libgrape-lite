@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_K_CORE_H_
-#define EXAMPLES_ANALYTICAL_APPS_FLASH_K_CORE_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_K_CORE_SEARCH_H_
+#define EXAMPLES_ANALYTICAL_APPS_FLASH_K_CORE_SEARCH_H_
 
 #include <grape/grape.h>
 
@@ -26,7 +26,7 @@ namespace grape {
 namespace flash {
 
 template <typename FRAG_T, typename VALUE_T>
-class KCoreFlash : public FlashAppBase<FRAG_T, VALUE_T> {
+class KCoreSearchFlash : public FlashAppBase<FRAG_T, VALUE_T> {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
@@ -67,4 +67,4 @@ class KCoreFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 }  // namespace flash
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_K_CORE_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_K_CORE_SEARCH_H_
