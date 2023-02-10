@@ -54,10 +54,10 @@ class Core2Flash : public FlashAppBase<FRAG_T, VALUE_T> {
     DefineMapV(local) {
       v.old = v.core;
 		  int nowcnt = 0;
-		  for_nb ( if (nb.core >= v.core) ++nowcnt );
+		  for_nb ( if (nb.core >= v.core) ++nowcnt; );
 		  if (nowcnt >= v.core) return;
 		  memset(cnt.data(), 0, sizeof(int) * (v.core + 1));
-		  for_nb ( ++cnt[std::min(v.core, nb.core)] );
+		  for_nb ( ++cnt[std::min(v.core, nb.core)]; );
 		  for(int s = 0; s + cnt[v.core] < v.core; --v.core) 
         s += cnt[v.core];
     };

@@ -53,6 +53,8 @@ limitations under the License.
 #include "flash/subgraph/triangle.h"
 #include "flash/subgraph/3-path.h"
 #include "flash/subgraph/tailed-triangle.h"
+#include "flash/subgraph/rectangle.h"
+#include "flash/subgraph/diamond.h"
 #include "flash/k-core/k-core-search.h"
 #include "flash/k-core/core.h"
 #include "flash/k-core/core-2.h"
@@ -229,6 +231,19 @@ inline OutArchive& operator>>(OutArchive& out_archive, TRIANGLE_TYPE& v) {
   return out_archive;
 }
 
+struct RECTANGLE_TYPE {
+  int32_t deg, count;
+  std::vector<std::pair<int, int> > out;
+};
+inline InArchive& operator<<(InArchive& in_archive, const RECTANGLE_TYPE& v) {
+  in_archive << v.deg << v.out;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, RECTANGLE_TYPE& v) {
+  out_archive >> v.deg >> v.out;
+  return out_archive;
+}
+
 struct COLOR_TYPE {
   short c, cc;
   int32_t deg;
@@ -326,6 +341,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "3-path") {
     using AppType = grape::flash::ThreePathFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "rectangle") {
+    using AppType = grape::flash::RectangleFlash<GraphType, RECTANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "diamond") {
+    using AppType = grape::flash::DiamondFlash<GraphType, RECTANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;

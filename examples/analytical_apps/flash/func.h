@@ -45,7 +45,7 @@ namespace flash {
                         vid_t nb_id = graph.Vertex2Gid(e.get_neighbor()); \
                         nb_id = All.fw->Gid2Key(nb_id); \
                         value_t nb = *(All.fw->Get(nb_id)); \
-                        __VA_ARGS__; \
+                        __VA_ARGS__ \
                       } }
 #define for_out(...) {vertex_t u; \
                       u.SetValue(All.fw->Key2Lid(id)); \
@@ -54,7 +54,7 @@ namespace flash {
                         vid_t nb_id = graph.Vertex2Gid(e.get_neighbor()); \
                         nb_id = All.fw->Gid2Key(nb_id); \
                         value_t nb = *(All.fw->Get(nb_id)); \
-                        __VA_ARGS__; \
+                        __VA_ARGS__ \
                       } }
 #define for_nb(...) {for_in(__VA_ARGS__) for_out(__VA_ARGS__)}
 
