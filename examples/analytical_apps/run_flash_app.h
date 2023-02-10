@@ -50,7 +50,9 @@ limitations under the License.
 #include "flash/mm/mm-opt.h"
 #include "flash/mm/mm.h"
 #include "flash/pagerank/pagerank.h"
-#include "flash/triangle/triangle.h"
+#include "flash/subgraph/triangle.h"
+#include "flash/subgraph/3-path.h"
+#include "flash/subgraph/tailed-triangle.h"
 #include "flash/k-core/k-core-search.h"
 #include "flash/k-core/core.h"
 #include "flash/k-core/core-2.h"
@@ -318,6 +320,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "triangle") {
     using AppType = grape::flash::TriangleFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "tailed-triangle") {
+    using AppType = grape::flash::TailedTriangleFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "3-path") {
+    using AppType = grape::flash::ThreePathFlash<GraphType, TRIANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;
