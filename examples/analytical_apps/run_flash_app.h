@@ -49,7 +49,9 @@ limitations under the License.
 #include "flash/mis/mis-2.h"
 #include "flash/mm/mm-opt.h"
 #include "flash/mm/mm.h"
-#include "flash/pagerank/pagerank.h"
+#include "flash/ranking/pagerank.h"
+#include "flash/ranking/articlerank.h"
+#include "flash/ranking/ppr.h"
 #include "flash/subgraph/triangle.h"
 #include "flash/subgraph/3-path.h"
 #include "flash/subgraph/tailed-triangle.h"
@@ -299,6 +301,14 @@ void RunFlash() {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_pr_mr, FLAGS_pr_d);
+  } else if (name == "article-rank") {
+     using AppType = grape::flash::ArticleRankFlash<GraphType, PR_TYPE>;
+     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_pr_mr, FLAGS_pr_d);
+  } else if (name == "ppr") {
+    using AppType = grape::flash::PPRFlash<GraphType, PR_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_ppr_s, FLAGS_pr_mr);
   } else if (name == "cc") {
     using AppType = grape::flash::CCFlash<GraphType, CC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
@@ -353,7 +363,7 @@ void RunFlash() {
     using AppType = grape::flash::KCliqueFlash<GraphType, TRIANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_kcl_k);
-  }else {
+  } else {
     LOG(FATAL) << "Invalid app name: " << name;
   }
 }
