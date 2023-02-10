@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_DIAMOND_H_
-#define EXAMPLES_ANALYTICAL_APPS_FLASH_DIAMOND_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_H_
+#define EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_H_
 
 #include <grape/grape.h>
 
@@ -26,7 +26,7 @@ namespace grape {
 namespace flash {
 
 template <typename FRAG_T, typename VALUE_T>
-class DiamondFlash : public FlashAppBase<FRAG_T, VALUE_T> {
+class KCliqueFlash : public FlashAppBase<FRAG_T, VALUE_T> {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
@@ -40,46 +40,56 @@ class DiamondFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 
   int32_t* Res(value_t* v) { return &(v->count); }
 
-  void Run(const fragment_t& graph) {
+  void Run(const fragment_t& graph, int32_t k) {
     Print("Run Triangle Counting with Flash, ");
     int32_t n_vertex = graph.GetTotalVerticesNum();
-    Print("total vertices: %d\n", n_vertex);
+    Print("total vertices: %d, k = %d\n", n_vertex, k);
 
+		Print("Loading\n");
 		DefineMapV(init) { v.deg = Deg(id); v.count = 0; v.out.clear(); };
 		VertexMap(All, CTrueV, init);
-		
-		DefineMapE(update) { d.out.push_back(std::make_pair(sid, s.deg)); };
-		Print("Loading...\n");
-		EdgeMapDense(All, EU, CTrueE, update, CTrueV);
 
-		DefineMapV(count) {
-			std::vector<int> cnt(n_vertex, 0);
-			std::unordered_set<int> nghs;
-			nghs.clear();
-			for_nb( nghs.insert(nb_id); );
-			for_nb(
-				for (auto &o: nb.out) {
-					if (o.second > v.deg || (o.second == v.deg && o.first > id)) {
-						if (nghs.find(o.first) != nghs.end()) {
-							v.count += cnt[o.first]++;
-						}
+		DefineFE(check) { return (s.deg > d.deg) || (s.deg == d.deg && sid > did); };
+		DefineMapE(update) { d.out.insert(sid); };
+		EdgeMapDense(All, EU, check, update, CTrueV);
+
+		Print("Computing\n");
+		DefineFV(filter) { return v.out.size() >= k - 1; };
+		std::function<void(std::set<int>&, int, int&)> compute=[&](std::set<int> &cand, int nowk, int &res) {
+			if (nowk == k) {
+				res++;
+				return;
+			}
+			std::set<int> c;
+			for(auto &u : cand) {
+				int len = 0;
+				c.clear();
+				for (auto &o : GetV(u)->out) {
+					if (cand.find(o) != cand.end()) {
+						len++;
+						c.insert(o);
 					}
 				}
-			)
+				if (len < k - nowk - 1) continue;
+				compute(c, nowk + 1, res);
+			}
 		};
-		Print("Computing...\n");
-		VertexMap(All, CTrueV, count, false);
 
-		int64_t cnt = 0, cnt_all = 0;
+		DefineMapV(local) {
+			compute(v.out, 1, v.count);
+		};
+		VertexMapSeq(All, filter, local, false);
+
+    int64_t cnt = 0, cnt_all = 0;
 		for (auto &id: All.s) {
 			cnt += GetV(id)->count;
 		}
     GetSum(cnt, cnt_all);
-    Print( "number of diamonds=%lld\n", cnt_all);
+    Print( "number of %d-cliques=%lld\n", k, cnt_all);
 	}
 };
 
 }  // namespace flash
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_DIAMOND_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_H_

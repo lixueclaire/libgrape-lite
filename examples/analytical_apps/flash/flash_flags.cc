@@ -33,6 +33,7 @@ DEFINE_int64(bc_source, 0, "source vertex of bc.");
 DEFINE_double(pr_d, 0.85, "damping_factor of pagerank");
 DEFINE_int32(pr_mr, 10, "max rounds of pagerank");
 DEFINE_int32(kc_k, 5, "k of k-core seraching");
+DEFINE_int32(kcl_k, 5, "k of k-clique counting");
 DEFINE_int32(degree_threshold, std::numeric_limits<int>::max(),
              "Filtering threshold for some algorithms");
 

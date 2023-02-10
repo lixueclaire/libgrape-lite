@@ -55,6 +55,7 @@ limitations under the License.
 #include "flash/subgraph/tailed-triangle.h"
 #include "flash/subgraph/rectangle.h"
 #include "flash/subgraph/diamond.h"
+#include "flash/subgraph/k-clique.h"
 #include "flash/k-core/k-core-search.h"
 #include "flash/k-core/core.h"
 #include "flash/k-core/core-2.h"
@@ -348,7 +349,11 @@ void RunFlash() {
   } else if (name == "diamond") {
     using AppType = grape::flash::DiamondFlash<GraphType, RECTANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
-  } else {
+  } else if (name == "k-clique") {
+    using AppType = grape::flash::KCliqueFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_kcl_k);
+  }else {
     LOG(FATAL) << "Invalid app name: " << name;
   }
 }

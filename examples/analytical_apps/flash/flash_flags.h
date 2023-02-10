@@ -30,6 +30,7 @@ DECLARE_int64(bc_source);
 DECLARE_double(pr_d);
 DECLARE_int32(pr_mr);
 DECLARE_int32(kc_k);
+DECLARE_int32(kcl_k);
 
 DECLARE_int32(degree_threshold);
 
