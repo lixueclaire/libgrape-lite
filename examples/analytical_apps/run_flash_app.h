@@ -42,8 +42,10 @@ limitations under the License.
 #include "flash/flash_flags.h"
 #include "flash/flash_worker.h"
 #include "flash/traversal/bfs.h"
-#include "flash/traversal/bc.h"
 #include "flash/traversal/sssp.h"
+#include "flash/centrality/bc.h"
+#include "flash/centrality/katz.h"
+#include "flash/centrality/eigenvec.h"
 #include "flash/cc/cc-opt.h"
 #include "flash/cc/cc.h"
 #include "flash/mis/mis.h"
@@ -154,6 +156,18 @@ struct BC_TYPE {
   char d;
   float b, c;
 };
+
+struct KATZ_TYPE {
+  float val, next;
+};
+inline InArchive& operator<<(InArchive& in_archive, const KATZ_TYPE& v) {
+  in_archive << v.val;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, KATZ_TYPE& v) {
+  out_archive >> v.val;
+  return out_archive;
+}
 
 struct CC_TYPE {
   int tag;
@@ -345,6 +359,12 @@ void RunFlash() {
     using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bc_source);
+  } else if (name == "katz") {
+    using AppType = grape::flash::KATZFlash<GraphType, KATZ_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "eigenvec") {
+    using AppType = grape::flash::EigenvecFlash<GraphType, KATZ_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "mis") {
     using AppType = grape::flash::MISFlash<GraphType, MIS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
