@@ -35,6 +35,9 @@ DEFINE_double(pr_d, 0.85, "damping_factor of pagerank");
 DEFINE_int32(pr_mr, 10, "max rounds of pagerank");
 DEFINE_int32(ppr_s, 1, "source of ppr");
 DEFINE_int32(kc_k, 5, "k of k-core seraching");
+DEFINE_int32(abcore_a, 5, "a of ab-core");
+DEFINE_int32(abcore_b, 5, "b of ab-core");
+DEFINE_int32(abcore_nx, 0, "nx of ab-core");
 DEFINE_int32(kcl_k, 5, "k of k-clique counting");
 DEFINE_int32(degree_threshold, std::numeric_limits<int>::max(),
              "Filtering threshold for some algorithms");

@@ -61,9 +61,10 @@ limitations under the License.
 #include "flash/subgraph/rectangle.h"
 #include "flash/subgraph/diamond.h"
 #include "flash/subgraph/k-clique.h"
-#include "flash/k-core/k-core-search.h"
-#include "flash/k-core/core.h"
-#include "flash/k-core/core-2.h"
+#include "flash/core/k-core-search.h"
+#include "flash/core/core.h"
+#include "flash/core/core-2.h"
+#include "flash/core/ab-core.h"
 #include "flash/clustering/color.h"
 #include "flash/clustering/lpa.h"
 
@@ -241,6 +242,10 @@ inline OutArchive& operator>>(OutArchive& out_archive, CORE_2_TYPE& v) {
   return out_archive;
 }
 
+struct AB_CORE_TYPE {
+  int d, c;
+};
+
 struct TRIANGLE_TYPE {
   int32_t deg, count;
   std::set<int32_t> out;
@@ -387,6 +392,10 @@ void RunFlash() {
   } else if (name == "core-2") {
     using AppType = grape::flash::Core2Flash<GraphType, CORE_2_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "ab-core") {
+    using AppType = grape::flash::ABCoreFlash<GraphType, AB_CORE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_abcore_a, FLAGS_abcore_b, FLAGS_abcore_nx);
   } else if (name == "color") {
     using AppType = grape::flash::ColorFlash<GraphType, COLOR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
