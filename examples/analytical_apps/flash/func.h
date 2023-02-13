@@ -36,6 +36,7 @@ namespace flash {
 #define OutDeg(id) getOutDegree<fragment_t, vid_t>(graph, All.fw->Key2Lid(id))
 #define InDeg(id) getInDegree<fragment_t, vid_t>(graph, All.fw->Key2Lid(id))
 #define Deg(id) (OutDeg(id) + InDeg(id))
+#define VDATA(id) getVData<fragment_t, vid_t>(graph, All.fw->Key2Lid(id))
 #define Print(...)  if (All.fw->GetPid() == 0) printf(__VA_ARGS__)
 
 #define for_in(...) { vertex_t u; \
@@ -113,6 +114,13 @@ inline int getInDegree(const fragment_t& graph, vid_t lid) {
   Vertex<vid_t> v;
   v.SetValue(lid);
   return graph.GetLocalInDegree(v);
+}
+
+template <typename fragment_t, typename vid_t>
+inline const typename fragment_t::vdata_t& getVData(const fragment_t& graph, vid_t lid) {
+  Vertex<vid_t> v;
+  v.SetValue(lid);
+  return graph.GetData(v);
 }
 
 }  // namespace flash

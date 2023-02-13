@@ -61,7 +61,8 @@ limitations under the License.
 #include "flash/k-core/k-core-search.h"
 #include "flash/k-core/core.h"
 #include "flash/k-core/core-2.h"
-#include "flash/color/color.h"
+#include "flash/clustering/color.h"
+#include "flash/clustering/lpa.h"
 
 #ifndef __AFFINITY__
 #define __AFFINITY__ false
@@ -261,6 +262,19 @@ inline OutArchive& operator>>(OutArchive& out_archive, COLOR_TYPE& v) {
   return out_archive;
 }
 
+struct LPA_TYPE {
+  int c, cc;
+  std::vector<int> s;
+};
+inline InArchive& operator<<(InArchive& in_archive, const LPA_TYPE& v) {
+  in_archive << v.c;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, LPA_TYPE& v) {
+  out_archive >> v.c;
+  return out_archive;
+}
+
 void RunFlash() {
   CommSpec comm_spec;
   comm_spec.Init(MPI_COMM_WORLD);
@@ -344,6 +358,13 @@ void RunFlash() {
   } else if (name == "color") {
     using AppType = grape::flash::ColorFlash<GraphType, COLOR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "lpa") {
+    using LPAGraphType =
+        grape::ImmutableEdgecutFragment<int32_t, uint32_t, uint32_t,
+                                        grape::EmptyType,
+                                        LoadStrategy::kBothOutIn>;
+    using AppType = grape::flash::LPAFlash<LPAGraphType, LPA_TYPE>;
+    CreateAndQuery<LPAGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "triangle") {
     using AppType = grape::flash::TriangleFlash<GraphType, TRIANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
