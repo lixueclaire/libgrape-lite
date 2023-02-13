@@ -26,6 +26,7 @@ DECLARE_string(out_prefix);
 DECLARE_string(jobid);
 
 DECLARE_int64(bfs_source);
+DECLARE_int64(sssp_source);
 DECLARE_int64(bc_source);
 DECLARE_double(pr_d);
 DECLARE_int32(pr_mr);

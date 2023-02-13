@@ -41,10 +41,11 @@ limitations under the License.
 #include "timer.h"
 #include "flash/flash_flags.h"
 #include "flash/flash_worker.h"
-#include "flash/bfs/bfs.h"
+#include "flash/traversal/bfs.h"
+#include "flash/traversal/bc.h"
+#include "flash/traversal/sssp.h"
 #include "flash/cc/cc-opt.h"
 #include "flash/cc/cc.h"
-#include "flash/bc/bc.h"
 #include "flash/mis/mis.h"
 #include "flash/mis/mis-2.h"
 #include "flash/mm/mm-opt.h"
@@ -143,6 +144,10 @@ void CreateAndQuery(const CommSpec& comm_spec, const std::string& out_prefix,
 
 struct BFS_TYPE {
   int dis; 
+};
+
+struct SSSP_TYPE {
+  float dis; 
 };
 
 struct BC_TYPE {
@@ -311,6 +316,13 @@ void RunFlash() {
     using AppType = grape::flash::BFSFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bfs_source);
+  } if (name == "sssp") {
+    using SSSPGraphType =
+        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
+                                        double, LoadStrategy::kBothOutIn>;
+    using AppType = grape::flash::SSSPFlash<SSSPGraphType, SSSP_TYPE>;
+    CreateAndQuery<SSSPGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                           FLAGS_sssp_source);
   } else if (name == "pagerank") {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,

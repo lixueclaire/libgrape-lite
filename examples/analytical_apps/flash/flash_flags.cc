@@ -30,6 +30,7 @@ DEFINE_bool(directed, false, "input graph is directed or not.");
 /* flags related to specific applications. */
 DEFINE_int64(bfs_source, 0, "source vertex of bfs.");
 DEFINE_int64(bc_source, 0, "source vertex of bc.");
+DEFINE_int64(sssp_source, 0, "source vertex of sssp.");
 DEFINE_double(pr_d, 0.85, "damping_factor of pagerank");
 DEFINE_int32(pr_mr, 10, "max rounds of pagerank");
 DEFINE_int32(ppr_s, 1, "source of ppr");

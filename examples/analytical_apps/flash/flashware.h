@@ -388,7 +388,10 @@ inline void FlashWare<fragment_t, value_t>::UpdateAllMirrors() {
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::ProcessMasterMessage(
     const vid_t& key, const value_t& value) {
-  SetActive(key);
+  if (!IsActive(key)) { 
+    SetActive(key);
+    next_states_[key] = states_[key];
+  }
   if (f_agg_ == nullptr)
     next_states_[key] = value;
   else
