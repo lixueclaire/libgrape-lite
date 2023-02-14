@@ -39,6 +39,7 @@ DEFINE_int32(abcore_a, 5, "a of ab-core");
 DEFINE_int32(abcore_b, 5, "b of ab-core");
 DEFINE_int32(abcore_nx, 0, "nx of ab-core");
 DEFINE_int32(kcl_k, 5, "k of k-clique counting");
+DEFINE_int32(mf_d, 10, "d of matrix-fac");
 DEFINE_int32(degree_threshold, std::numeric_limits<int>::max(),
              "Filtering threshold for some algorithms");
 

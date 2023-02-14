@@ -61,6 +61,7 @@ limitations under the License.
 #include "flash/subgraph/rectangle.h"
 #include "flash/subgraph/diamond.h"
 #include "flash/subgraph/k-clique.h"
+#include "flash/subgraph/matrix-fac.h"
 #include "flash/core/k-core-search.h"
 #include "flash/core/core.h"
 #include "flash/core/core-2.h"
@@ -272,6 +273,18 @@ inline OutArchive& operator>>(OutArchive& out_archive, RECTANGLE_TYPE& v) {
   return out_archive;
 }
 
+struct MATRIX_TYPE {
+  std::vector<float> val;
+};
+inline InArchive& operator<<(InArchive& in_archive, const MATRIX_TYPE& v) {
+  in_archive << v.val;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, MATRIX_TYPE& v) {
+  out_archive >> v.val;
+  return out_archive;
+}
+
 struct COLOR_TYPE {
   short c, cc;
   int32_t deg;
@@ -335,7 +348,7 @@ void RunFlash() {
     using AppType = grape::flash::BFSFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bfs_source);
-  } if (name == "sssp") {
+  } else if (name == "sssp") {
     using SSSPGraphType =
         grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
                                         double, LoadStrategy::kBothOutIn>;
@@ -425,6 +438,13 @@ void RunFlash() {
     using AppType = grape::flash::KCliqueFlash<GraphType, TRIANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_kcl_k);
+  } else if (name == "matrix-fac") {
+    using MatrixGraphType =
+        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
+                                        double, LoadStrategy::kBothOutIn>;
+    using AppType = grape::flash::MatrixFacFlash<MatrixGraphType, MATRIX_TYPE>;
+    CreateAndQuery<MatrixGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                             FLAGS_mf_d);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;
   }

@@ -32,7 +32,7 @@ VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f) {
   return res;
 }
 
-template <typename fragment_t, typename value_t, class F, class M>
+/*template <typename fragment_t, typename value_t, class F, class M>
 VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = true) {
   U.fw->ForEach(U.s.begin(), U.s.end(),
                 [&U, &f, &m, &b](int tid, typename fragment_t::vid_t key) {
@@ -46,9 +46,25 @@ VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = tr
   U.fw->Barrier();
   U.fw->GetActiveVertices(res.s);
   return res;
-}
+}*/
 
 template <typename fragment_t, typename value_t, class F, class M>
+VSet vertexMapFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = true) {
+  U.fw->ForEach(U.s.begin(), U.s.end(),
+                [&U, &f, &m, &b](int tid, typename fragment_t::vid_t key) {
+                  value_t v = *(U.fw->Get(key));
+                  if (!f(key, v))
+                    return;
+                  m(key, v);
+                  U.fw->PutNextPull(key, v, b, tid);
+                });
+  VSet res;
+  U.fw->Barrier();
+  U.fw->GetActiveVerticesAndSetStates(res.s);
+  return res;
+}
+
+/*template <typename fragment_t, typename value_t, class F, class M>
 VSet vertexMapSeqFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = true) {
   VSet res;
   for (auto &key : U.s) {
@@ -61,6 +77,21 @@ VSet vertexMapSeqFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b =
     }           
   }
   U.fw->Barrier();
+  return res;
+}*/
+
+template <typename fragment_t, typename value_t, class F, class M>
+VSet vertexMapSeqFunction(const fragment_t& graph, VSet& U, F& f, M& m, bool b = true) {
+  for (auto &key : U.s) {
+    value_t v = *(U.fw->Get(key));
+    if (f(key, v)) {
+      m(key, v);
+      U.fw->PutNextPull(key, v, b);
+    }           
+  }
+  VSet res;
+  U.fw->Barrier();
+  U.fw->GetActiveVerticesAndSetStates(res.s);
   return res;
 }
 

@@ -44,6 +44,7 @@ namespace flash {
                       auto es = graph.GetIncomingAdjList(u); \
                       for (auto& e : es) { \
                         vid_t nb_id = graph.Vertex2Gid(e.get_neighbor()); \
+                        edata_t weight = e.get_data(); \
                         nb_id = All.fw->Gid2Key(nb_id); \
                         value_t nb = *(All.fw->Get(nb_id)); \
                         __VA_ARGS__ \
@@ -53,6 +54,7 @@ namespace flash {
                       auto es = graph.GetOutgoingAdjList(u); \
                       for (auto& e : es) { \
                         vid_t nb_id = graph.Vertex2Gid(e.get_neighbor()); \
+                        edata_t weight = e.get_data(); \
                         nb_id = All.fw->Gid2Key(nb_id); \
                         value_t nb = *(All.fw->Get(nb_id)); \
                         __VA_ARGS__ \
@@ -91,6 +93,25 @@ template <class T> int set_intersect(const std::vector<T> &x,
                                      std::vector<T> &v) {
   auto it = set_intersection(x.begin(), x.end(), y.begin(), y.end(), v.begin());
   return it - v.begin();
+}
+
+template <class T1, class T2> void add(std::vector<T1> &x, std::vector<T1> &y, T2 c) {
+  for (size_t i = 0; i < x.size(); ++i) 
+    x[i] += y[i] * c;
+}
+template <class T> void add(std::vector<T> &x, std::vector<T> &y) {
+  for (size_t i = 0; i < x.size(); ++i) 
+    x[i] += y[i];
+}
+template <class T> T prod(std::vector<T> &x, std::vector<T> &y) {
+  T s = 0; 
+  for (size_t i = 0; i < x.size(); ++i)
+    s += x[i] * y[i];
+    return s;
+}
+template <class T1, class T2> void mult(std::vector<T1> &v, T2 c) {
+  for(size_t i = 0; i < v.size(); ++i) 
+    v[i] *= c;
 }
 
 template <typename vid_t, typename value_t>

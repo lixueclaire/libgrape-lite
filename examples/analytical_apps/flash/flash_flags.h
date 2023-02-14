@@ -36,6 +36,7 @@ DECLARE_int32(kcl_k);
 DECLARE_int32(abcore_a);
 DECLARE_int32(abcore_b);
 DECLARE_int32(abcore_nx);
+DECLARE_int32(mf_d);
 
 DECLARE_int32(degree_threshold);
 
