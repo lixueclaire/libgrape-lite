@@ -88,6 +88,52 @@ namespace flash {
 #define DefineInEdges(F) auto F=[&](const vid_t vid, const value_t& v) -> std::vector<vid_t>
 #define use_edge(F) F(vid, v)
 
+template<class T> void reduce_vec(std::vector<T> &src, std::vector<T> &rst, void (*f) (void *la, void* lb, int *len, MPI_Datatype *dtype), bool bcast) {
+	int id;
+	MPI_Comm_rank(MPI_COMM_WORLD, &id);
+	bool is_master = (id==0);
+	MPI_Datatype type;
+	MPI_Type_contiguous(sizeof(src[0])*src.size()+sizeof(int), MPI_CHAR, &type);
+	MPI_Type_commit(&type);
+	MPI_Op op;
+	MPI_Op_create(f, 1, &op);
+
+	char *tmp_in = new char[sizeof(src[0])*src.size() + sizeof(int)];
+	int len = (int) src.size();
+	memcpy(tmp_in, &len, sizeof(int));
+	memcpy(tmp_in+sizeof(int), src.data(), sizeof(src[0])*src.size());
+
+	char *tmp_out = is_master? new char[sizeof(src[0])*src.size() + sizeof(int)] : NULL;
+
+	MPI_Reduce(tmp_in, tmp_out, 1, type, op, 0, MPI_COMM_WORLD);
+	MPI_Op_free(&op);
+
+	delete[] tmp_in;
+	if(is_master) {
+		rst.resize(len);
+		memcpy(rst.data(), tmp_out+sizeof(int), sizeof(src[0])*src.size());
+		delete[] tmp_out;
+	}
+
+	if(bcast) {
+		if(!is_master) rst.resize(src.size());
+		MPI_Bcast(rst.data(), sizeof(rst[0]) * rst.size(), MPI_CHAR, 0, MPI_COMM_WORLD);
+	}
+}
+#define ReduceVec3(src,rst,F) reduce_vec(src, rst, [](void *la, void *lb, int *lens, MPI_Datatype *dtype) { \
+	using T = decltype(src.data()); int len; memcpy(&len, la, sizeof(int)); memcpy(lb, &len, sizeof(int));\
+	T src = (T) (((char*)la)+sizeof(int)); T rst = (T) (((char*)lb)+sizeof(int)); F;\
+},true);
+
+#define ReduceVec4(src,rst,F,bcast) reduce_vec(src, rst, [](void *la, void* lb, int *lens, MPI_Datatype *dtype) { \
+	using T = decltype(src.data()); int len; memcpy(&len, la, sizeof(int)); memcpy(lb, &len, sizeof(int));\
+	T src = (T) (((char*)la)+sizeof(int)); T rst = (T) (((char*)lb)+sizeof(int)); F;\
+}, bcast);
+
+#define GetReduceVec(_1, _2, _3, _4, NAME, ...) NAME
+#define ReduceVec(...) GetReduceVec(__VA_ARGS__, ReduceVec4, ReduceVec3, _2, _1, ...) (__VA_ARGS__)
+#define Reduce ReduceVec
+
 template <class T> int set_intersect(const std::vector<T> &x,
                                      const std::vector<T> &y,
                                      std::vector<T> &v) {
@@ -113,6 +159,48 @@ template <class T1, class T2> void mult(std::vector<T1> &v, T2 c) {
   for(size_t i = 0; i < v.size(); ++i) 
     v[i] *= c;
 }
+
+class union_find: public std::vector<int> {
+	public: union_find(int n) {
+    resize(n); 
+    for(int i = 0; i < n; ++i) 
+      (*this)[i] = i;
+  }
+	public: union_find() {}
+};
+int get_f(int *f, int v) {
+  if(f[v] != v) 
+    f[v] =get_f(f, f[v]); 
+  return f[v];
+}
+void union_f(int *f, int a, int b){
+  int fa = get_f(f, a); 
+  int fb = get_f(f, b); 
+  f[fa] = fb;
+}
+int get_f(std::vector<int> &f,int v) {
+  if(f[v] != v) 
+    f[v] = get_f(f, f[v]); 
+  return f[v];
+}
+void union_f(std::vector<int> &f, int a, int b){
+  int fa = get_f(f, a); 
+  int fb = get_f(f, b); 
+  f[fa] = fb;
+}
+template <typename E>
+void kruskal(std::vector<E> &edges, E *mst, int n) {
+	union_find f(n);
+	memset(mst, 0, sizeof(E) * (n-1) );
+	sort(edges.begin(),edges.end());
+	for(int i = 0, p = 0; i < (int)edges.size() && p < n-1; ++i) {
+		int a = get_f(f, edges[i].second.first), b = get_f(f, edges[i].second.second);
+		if (a != b) {
+      union_f(f, a, b); 
+      mst[p++] = edges[i];
+    }
+  }
+}	
 
 template <typename vid_t, typename value_t>
 inline bool cTrueV(const vid_t id, const value_t& v) {

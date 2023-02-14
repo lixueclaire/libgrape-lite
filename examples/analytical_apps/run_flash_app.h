@@ -63,6 +63,7 @@ limitations under the License.
 #include "flash/subgraph/diamond.h"
 #include "flash/subgraph/k-clique.h"
 #include "flash/subgraph/matrix-fac.h"
+#include "flash/measurement/msf.h"
 #include "flash/core/k-core-search.h"
 #include "flash/core/core.h"
 #include "flash/core/core-2.h"
@@ -146,6 +147,8 @@ void CreateAndQuery(const CommSpec& comm_spec, const std::string& out_prefix,
   DoQuery<FRAG_T, APP_T, Args...>(fragment, app, comm_spec, spec, out_prefix,
                                   args...);                              
 }
+
+struct EMPTY_TYPE { };
 
 struct BFS_TYPE {
   int dis; 
@@ -357,16 +360,16 @@ void RunFlash() {
         grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
                                         grape::EmptyType,
                                         LoadStrategy::kBothOutIn>;
+  using WeightedGraphType =
+        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
+                                        double,LoadStrategy::kBothOutIn>;                                    
   if (name == "bfs") {
     using AppType = grape::flash::BFSFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bfs_source);
   } else if (name == "sssp") {
-    using SSSPGraphType =
-        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
-                                        double, LoadStrategy::kBothOutIn>;
-    using AppType = grape::flash::SSSPFlash<SSSPGraphType, SSSP_TYPE>;
-    CreateAndQuery<SSSPGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+    using AppType = grape::flash::SSSPFlash<WeightedGraphType, SSSP_TYPE>;
+    CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                            FLAGS_sssp_source);
   } else if (name == "pagerank") {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
@@ -456,12 +459,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_kcl_k);
   } else if (name == "matrix-fac") {
-    using MatrixGraphType =
-        grape::ImmutableEdgecutFragment<int32_t, uint32_t, grape::EmptyType,
-                                        double, LoadStrategy::kBothOutIn>;
-    using AppType = grape::flash::MatrixFacFlash<MatrixGraphType, MATRIX_TYPE>;
-    CreateAndQuery<MatrixGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
-                                             FLAGS_mf_d);
+    using AppType = grape::flash::MatrixFacFlash<WeightedGraphType, MATRIX_TYPE>;
+    CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                               FLAGS_mf_d);
+  } else if (name == "msf") {
+    using AppType = grape::flash::MSFFlash<WeightedGraphType, EMPTY_TYPE>;
+    CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;
   }
