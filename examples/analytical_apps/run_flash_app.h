@@ -55,6 +55,7 @@ limitations under the License.
 #include "flash/ranking/pagerank.h"
 #include "flash/ranking/articlerank.h"
 #include "flash/ranking/ppr.h"
+#include "flash/ranking/hits.h"
 #include "flash/subgraph/triangle.h"
 #include "flash/subgraph/3-path.h"
 #include "flash/subgraph/tailed-triangle.h"
@@ -189,6 +190,18 @@ inline InArchive& operator<<(InArchive& in_archive, const PR_TYPE& v) {
 }
 inline OutArchive& operator>>(OutArchive& out_archive, PR_TYPE& v) {
   out_archive >> v.deg >> v.val;
+  return out_archive;
+}
+
+struct HITS_TYPE {
+  float auth, hub, auth1, hub1;
+};
+inline InArchive& operator<<(InArchive& in_archive, const HITS_TYPE& v) {
+  in_archive << v.auth << v.hub;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, HITS_TYPE& v) {
+  out_archive >> v.auth >> v.hub;
   return out_archive;
 }
 
@@ -367,6 +380,10 @@ void RunFlash() {
     using AppType = grape::flash::PPRFlash<GraphType, PR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_ppr_s, FLAGS_pr_mr);
+  } else if (name == "hits") {
+    using AppType = grape::flash::HITSFlash<GraphType, HITS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_pr_mr);
   } else if (name == "cc") {
     using AppType = grape::flash::CCFlash<GraphType, CC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
