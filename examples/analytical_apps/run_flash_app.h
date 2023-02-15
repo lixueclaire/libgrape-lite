@@ -50,6 +50,8 @@ limitations under the License.
 #include "flash/cc/cc-opt.h"
 #include "flash/cc/cc-block.h"
 #include "flash/cc/cc-union.h"
+#include "flash/cc/scc.h"
+#include "flash/cc/bcc.h"
 #include "flash/mis/mis.h"
 #include "flash/mis/mis-2.h"
 #include "flash/mm/mm-opt.h"
@@ -73,6 +75,7 @@ limitations under the License.
 #include "flash/core/ab-core.h"
 #include "flash/clustering/color.h"
 #include "flash/clustering/lpa.h"
+#include "flash/clustering/ego-net.h"
 
 #ifndef __AFFINITY__
 #define __AFFINITY__ false
@@ -184,6 +187,14 @@ struct CC_TYPE {
 
 struct CC_OPT_TYPE {
   int64_t cid;
+};
+
+struct SCC_TYPE {
+  int fid, scc;
+};
+
+struct BCC_TYPE {
+  int d, cid, p, dis, bcc;
 };
 
 struct PR_TYPE {
@@ -331,6 +342,20 @@ inline OutArchive& operator>>(OutArchive& out_archive, LPA_TYPE& v) {
   return out_archive;
 }
 
+struct EGO_TYPE {
+  int deg;
+  std::vector<int> out;
+  std::vector<std::vector<int> > ego;
+};
+inline InArchive& operator<<(InArchive& in_archive, const EGO_TYPE& v) {
+  in_archive << v.deg << v.out;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, EGO_TYPE& v) {
+  out_archive >> v.deg >> v.out;
+  return out_archive;
+}
+
 void RunFlash() {
   CommSpec comm_spec;
   comm_spec.Init(MPI_COMM_WORLD);
@@ -402,6 +427,12 @@ void RunFlash() {
   } else if (name == "cc-union") {
     using AppType = grape::flash::CCUnionFlash<GraphType, CC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "scc") {
+    using AppType = grape::flash::SCCFlash<GraphType, SCC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "bcc") {
+    using AppType = grape::flash::BCCFlash<GraphType, BCC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bc") {
     using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
@@ -448,6 +479,9 @@ void RunFlash() {
                                         LoadStrategy::kBothOutIn>;
     using AppType = grape::flash::LPAFlash<LPAGraphType, LPA_TYPE>;
     CreateAndQuery<LPAGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "ego-net") {
+    using AppType = grape::flash::EgoFlash<GraphType, EGO_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "triangle") {
     using AppType = grape::flash::TriangleFlash<GraphType, TRIANGLE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);

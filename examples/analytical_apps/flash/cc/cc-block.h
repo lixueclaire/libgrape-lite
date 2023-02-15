@@ -51,7 +51,12 @@ class CCBlockFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 
 		Block(Reduce(f, cc, for_i(union_f(cc, f[i], i)), true));
 
-		DefineMapV(local2) { v.tag = get_f(cc, id); };
+    for(int i = 0; i < n_vertex; ++i) {
+		  int fi = get_f(cc, i);
+		  cc[i] = fi;
+	  }
+
+		DefineMapV(local2) { v.tag = cc[id]; };
 
 		VertexMapSeq(All, CTrueV, local2, false);
   }
