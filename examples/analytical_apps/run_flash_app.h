@@ -46,8 +46,10 @@ limitations under the License.
 #include "flash/centrality/bc.h"
 #include "flash/centrality/katz.h"
 #include "flash/centrality/eigenvec.h"
-#include "flash/cc/cc-opt.h"
 #include "flash/cc/cc.h"
+#include "flash/cc/cc-opt.h"
+#include "flash/cc/cc-block.h"
+#include "flash/cc/cc-union.h"
 #include "flash/mis/mis.h"
 #include "flash/mis/mis-2.h"
 #include "flash/mm/mm-opt.h"
@@ -64,6 +66,7 @@ limitations under the License.
 #include "flash/subgraph/k-clique.h"
 #include "flash/subgraph/matrix-fac.h"
 #include "flash/measurement/msf.h"
+#include "flash/measurement/msf-block.h"
 #include "flash/core/k-core-search.h"
 #include "flash/core/core.h"
 #include "flash/core/core-2.h"
@@ -393,6 +396,12 @@ void RunFlash() {
   } else if (name == "cc-opt") {
     using AppType = grape::flash::CCOptFlash<GraphType, CC_OPT_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cc-block") {
+    using AppType = grape::flash::CCBlockFlash<GraphType, CC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cc-union") {
+    using AppType = grape::flash::CCUnionFlash<GraphType, CC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bc") {
     using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
@@ -464,6 +473,9 @@ void RunFlash() {
                                                FLAGS_mf_d);
   } else if (name == "msf") {
     using AppType = grape::flash::MSFFlash<WeightedGraphType, EMPTY_TYPE>;
+    CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "msf-block") {
+    using AppType = grape::flash::MSFBlockFlash<WeightedGraphType, EMPTY_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;

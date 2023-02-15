@@ -411,6 +411,11 @@ inline VSet edgeMapFunction(const fragment_t& graph, VSet& U, H h, VSet& T,
   return edgeMapDenseFunction(graph, U, h, T, f, m, c, b);
 }
 
+template <typename fragment_t>
+inline void blockFunction(const fragment_t& graph, std::function<void()> f) {
+  f();
+}
+
 }  // namespace flash
 }  // namespace grape
 

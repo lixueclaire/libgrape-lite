@@ -60,6 +60,9 @@ namespace flash {
                         __VA_ARGS__ \
                       } }
 #define for_nb(...) {for_in(__VA_ARGS__) for_out(__VA_ARGS__)}
+#define for_i(...) for (int i = 0; i < len; ++i) { __VA_ARGS__;}
+#define for_j(...) for (int j = 0; j < len; ++j) { __VA_ARGS__;}
+#define for_k(...) for (int k = 0; k < len; ++k) { __VA_ARGS__;}
 
 #define VSize(U) U.size()
 #define VertexMap(U, f, ...) vertexMapFunction(graph, U, f, ##__VA_ARGS__)
@@ -70,6 +73,9 @@ namespace flash {
   edgeMapDenseFunction(graph, U, H, F, M, C, ##__VA_ARGS__)
 #define EdgeMapSparse(U, H, F, M, C, ...) \
   edgeMapSparseFunction(graph, U, H, F, M, C, ##__VA_ARGS__)
+
+#define Block(F) blockFunction(graph, FUNC_BLOCK(F))
+#define FUNC_BLOCK(F) [&](){F;}
 
 #define DefineFV(F) auto F = [&](const vid_t id, const value_t& v) -> bool
 #define DefineMapV(F) auto F = [&](const vid_t id, value_t& v)
