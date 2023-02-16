@@ -44,6 +44,7 @@ limitations under the License.
 #include "flash/traversal/bfs.h"
 #include "flash/traversal/sssp.h"
 #include "flash/centrality/bc.h"
+#include "flash/centrality/bc-undirected.h"
 #include "flash/centrality/katz.h"
 #include "flash/centrality/eigenvec.h"
 #include "flash/cc/cc.h"
@@ -457,6 +458,10 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bc") {
     using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_bc_source);
+  } else if (name == "bc-undirected") {
+    using AppType = grape::flash::BCUndirectedFlash<GraphType, BC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bc_source);
   } else if (name == "katz") {
