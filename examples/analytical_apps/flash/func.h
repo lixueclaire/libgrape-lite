@@ -89,7 +89,7 @@ namespace flash {
 #define CTrueE cTrueE<vid_t, value_t, edata_t>
 
 #define EjoinV(E, V) E, V
-#define VjoinP(property) std::vector<vid_t> res; res.push_back(v.property); return res;
+#define VjoinP(property) std::vector<vid_t> res; res.clear(); res.push_back(v.property); return res;
 #define DefineOutEdges(F) auto F=[&](const vid_t vid, const value_t& v) -> std::vector<vid_t>
 #define DefineInEdges(F) auto F=[&](const vid_t vid, const value_t& v) -> std::vector<vid_t>
 #define use_edge(F) F(vid, v)
