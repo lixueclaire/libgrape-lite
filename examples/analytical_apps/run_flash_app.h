@@ -47,6 +47,8 @@ limitations under the License.
 #include "flash/centrality/bc-undirected.h"
 #include "flash/centrality/katz.h"
 #include "flash/centrality/eigenvec.h"
+#include "flash/centrality/closeness.h"
+#include "flash/centrality/harmonic.h"
 #include "flash/cc/cc.h"
 #include "flash/cc/cc-opt.h"
 #include "flash/cc/cc-block.h"
@@ -181,6 +183,32 @@ inline InArchive& operator<<(InArchive& in_archive, const KATZ_TYPE& v) {
 }
 inline OutArchive& operator>>(OutArchive& out_archive, KATZ_TYPE& v) {
   out_archive >> v.val;
+  return out_archive;
+}
+
+struct CLOSENESS_TYPE {
+  int64_t seen, cnt;
+  double val;
+};
+inline InArchive& operator<<(InArchive& in_archive, const CLOSENESS_TYPE& v) {
+  in_archive << v.seen;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, CLOSENESS_TYPE& v) {
+  out_archive >> v.seen;
+  return out_archive;
+}
+
+struct HARMONIC_TYPE {
+  int64_t seen;
+  double val;
+};
+inline InArchive& operator<<(InArchive& in_archive, const HARMONIC_TYPE& v) {
+  in_archive << v.seen;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, HARMONIC_TYPE& v) {
+  out_archive >> v.seen;
   return out_archive;
 }
 
@@ -469,6 +497,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "eigenvec") {
     using AppType = grape::flash::EigenvecFlash<GraphType, KATZ_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "closeness") {
+    using AppType = grape::flash::ClosenessFlash<GraphType, CLOSENESS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "harmonic") {
+    using AppType = grape::flash::HarmonicFlash<GraphType, HARMONIC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "mis") {
     using AppType = grape::flash::MISFlash<GraphType, MIS_TYPE>;

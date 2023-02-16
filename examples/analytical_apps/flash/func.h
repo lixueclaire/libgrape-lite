@@ -165,6 +165,12 @@ template <class T1, class T2> void mult(std::vector<T1> &v, T2 c) {
   for(size_t i = 0; i < v.size(); ++i) 
     v[i] *= c;
 }
+template <class T> bool find(const std::vector<T> &vec, const T &val) {
+  return find(vec.begin(), vec.end(), val) != vec.end();
+}
+template <class T> int locate(const std::vector<T> &vec, const T &val) {
+  return find(vec.begin(), vec.end(), val) - vec.begin();
+}
 
 class union_find: public std::vector<int> {
 	public: union_find(int n) {
