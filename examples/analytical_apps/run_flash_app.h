@@ -50,6 +50,7 @@ limitations under the License.
 #include "flash/cc/cc-opt.h"
 #include "flash/cc/cc-block.h"
 #include "flash/cc/cc-union.h"
+#include "flash/cc/cc-log.h"
 #include "flash/cc/scc.h"
 #include "flash/cc/bcc.h"
 #include "flash/mis/mis.h"
@@ -66,6 +67,7 @@ limitations under the License.
 #include "flash/subgraph/rectangle.h"
 #include "flash/subgraph/diamond.h"
 #include "flash/subgraph/k-clique.h"
+#include "flash/subgraph/k-clique-2.h"
 #include "flash/subgraph/matrix-fac.h"
 #include "flash/measurement/msf.h"
 #include "flash/measurement/msf-block.h"
@@ -189,6 +191,10 @@ struct CC_OPT_TYPE {
   int64_t cid;
 };
 
+struct CC_LOG_TYPE {
+  int p, s, f;
+};
+
 struct SCC_TYPE {
   int fid, scc;
 };
@@ -299,6 +305,19 @@ inline InArchive& operator<<(InArchive& in_archive, const RECTANGLE_TYPE& v) {
   return in_archive;
 }
 inline OutArchive& operator>>(OutArchive& out_archive, RECTANGLE_TYPE& v) {
+  out_archive >> v.deg >> v.out;
+  return out_archive;
+}
+
+struct K_CLIQUE_2_TYPE {
+  int32_t deg, count;
+  std::vector<int32_t> out;
+};
+inline InArchive& operator<<(InArchive& in_archive, const K_CLIQUE_2_TYPE& v) {
+  in_archive << v.deg << v.out;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, K_CLIQUE_2_TYPE& v) {
   out_archive >> v.deg >> v.out;
   return out_archive;
 }
@@ -427,6 +446,9 @@ void RunFlash() {
   } else if (name == "cc-union") {
     using AppType = grape::flash::CCUnionFlash<GraphType, CC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cc-log") {
+    using AppType = grape::flash::CCLogFlash<GraphType, CC_LOG_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "scc") {
     using AppType = grape::flash::SCCFlash<GraphType, SCC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
@@ -499,6 +521,10 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-clique") {
     using AppType = grape::flash::KCliqueFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_kcl_k);
+  } else if (name == "k-clique-2") {
+    using AppType = grape::flash::KClique2Flash<GraphType, K_CLIQUE_2_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_kcl_k);
   } else if (name == "matrix-fac") {

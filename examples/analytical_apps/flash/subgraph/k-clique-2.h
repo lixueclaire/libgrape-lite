@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_H_
-#define EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_2_H_
+#define EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_2_H_
 
 #include <grape/grape.h>
 
@@ -26,7 +26,7 @@ namespace grape {
 namespace flash {
 
 template <typename FRAG_T, typename VALUE_T>
-class KCliqueFlash : public FlashAppBase<FRAG_T, VALUE_T> {
+class KClique2Flash : public FlashAppBase<FRAG_T, VALUE_T> {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
@@ -50,35 +50,35 @@ class KCliqueFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 		VertexMap(All, CTrueV, init);
 
 		DefineFE(check) { return (s.deg > d.deg) || (s.deg == d.deg && sid > did); };
-		DefineMapE(update) { d.out.insert(sid); };
+		DefineMapE(update) { d.out.push_back(sid); };
 		EdgeMapDense(All, EU, check, update, CTrueV);
 
 		Print("Computing\n");
-		DefineFV(filter) { return v.out.size() >= k - 1; };
-		std::function<void(std::set<int>&, int, int&)> compute=[&](std::set<int> &cand, int nowk, int &res) {
+		std::vector<std::vector<int>> c(k-1), s(k-1, std::vector<int>((n_vertex+31)/32, 0));
+		std::function<void(std::vector<int>&, int, int&)> compute=[&](std::vector<int> &cand, int nowk, int &res) {
 			if (nowk == k) {
 				res++;
 				return;
 			}
-			std::set<int> c;
-			for(auto &u : cand) {
+			for (auto &u : cand) s[nowk-1][u/32] |= 1<<(u%32);
+			for (auto &u : cand) {
 				int len = 0;
-				c.clear();
-				for (auto &o : GetV(u)->out) {
-					if (cand.find(o) != cand.end()) {
-						len++;
-						c.insert(o);
-					}
-				}
-				if (len < k - nowk - 1) continue;
-				compute(c, nowk + 1, res);
+				c[nowk-1].resize(cand.size());
+				for(auto &w : GetV(u)->out)
+					if(s[nowk-1][w/32] & (1<<(w%32)))
+						c[nowk-1][len++] = w;
+				if (len < k- nowk - 1) continue;
+				c[nowk-1].resize(len);
+				compute(c[nowk-1], nowk+1, res);
 			}
+			for(auto &u : cand) s[nowk-1][u/32] = 0;
 		};
 
 		DefineMapV(local) {
+			if ((int)v.out.size() < k - 1) return;
 			compute(v.out, 1, v.count);
 		};
-		VertexMapSeq(All, filter, local, false);
+		VertexMapSeq(All, CTrueV, local, false);
 
     int64_t cnt = 0, cnt_all = 0;
 		for (auto &id: All.s) {
@@ -92,4 +92,4 @@ class KCliqueFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 }  // namespace flash
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_K_CLIQUE_2_H_
