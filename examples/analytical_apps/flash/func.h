@@ -58,8 +58,9 @@ namespace flash {
                         nb_id = All.fw->Gid2Key(nb_id); \
                         value_t nb = *(All.fw->Get(nb_id)); \
                         __VA_ARGS__ \
-                      } }
+                      } }                    
 #define for_nb(...) {for_in(__VA_ARGS__) for_out(__VA_ARGS__)}
+#define Traverse(...) {for (int id = 0; id < n_vertex; id++) {value_t v = *(All.fw->Get(id)); __VA_ARGS__ }}
 #define for_i(...) for (int i = 0; i < len; ++i) { __VA_ARGS__;}
 #define for_j(...) for (int j = 0; j < len; ++j) { __VA_ARGS__;}
 #define for_k(...) for (int k = 0; k < len; ++k) { __VA_ARGS__;}

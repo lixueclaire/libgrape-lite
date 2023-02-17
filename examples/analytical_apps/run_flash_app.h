@@ -42,6 +42,9 @@ limitations under the License.
 #include "flash/flash_flags.h"
 #include "flash/flash_worker.h"
 #include "flash/traversal/bfs.h"
+#include "flash/traversal/bfs-undirected.h"
+#include "flash/traversal/dfs.h"
+#include "flash/traversal/dfs-undirected.h"
 #include "flash/traversal/sssp.h"
 #include "flash/centrality/bc.h"
 #include "flash/centrality/bc-undirected.h"
@@ -79,6 +82,7 @@ limitations under the License.
 #include "flash/core/core.h"
 #include "flash/core/core-2.h"
 #include "flash/core/ab-core.h"
+#include "flash/core/onion-layer-ordering.h"
 #include "flash/clustering/color.h"
 #include "flash/clustering/lpa.h"
 #include "flash/clustering/ego-net.h"
@@ -164,6 +168,10 @@ struct EMPTY_TYPE { };
 
 struct BFS_TYPE {
   int dis; 
+};
+
+struct DFS_TYPE {
+  int f, deg, pre;
 };
 
 struct SSSP_TYPE {
@@ -313,6 +321,11 @@ struct AB_CORE_TYPE {
   int d, c;
 };
 
+struct ONION_TYPE {
+  short core, old;
+  int rank, tmp, d;
+};
+
 struct TRIANGLE_TYPE {
   int32_t deg, count;
   std::set<int32_t> out;
@@ -448,6 +461,16 @@ void RunFlash() {
     using AppType = grape::flash::BFSFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bfs_source);
+  } else if (name == "bfs-undirected") {
+    using AppType = grape::flash::BFSUndirectedFlash<GraphType, BFS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_bfs_source);
+  } else if (name == "dfs") {
+    using AppType = grape::flash::DFSFlash<GraphType, DFS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "dfs-undirected") {
+    using AppType = grape::flash::DFSUndirectedFlash<GraphType, DFS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "sssp") {
     using AppType = grape::flash::SSSPFlash<WeightedGraphType, SSSP_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
@@ -535,6 +558,9 @@ void RunFlash() {
     using AppType = grape::flash::ABCoreFlash<GraphType, AB_CORE_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_abcore_a, FLAGS_abcore_b, FLAGS_abcore_nx);
+  } else if (name == "onion-layer-ordering") {
+    using AppType = grape::flash::OnionFlash<GraphType, ONION_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "color") {
     using AppType = grape::flash::ColorFlash<GraphType, COLOR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
