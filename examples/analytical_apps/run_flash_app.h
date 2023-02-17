@@ -72,6 +72,7 @@ limitations under the License.
 #include "flash/subgraph/k-clique.h"
 #include "flash/subgraph/k-clique-2.h"
 #include "flash/subgraph/matrix-fac.h"
+#include "flash/subgraph/densest-sub-2-approx.h"
 #include "flash/measurement/msf.h"
 #include "flash/measurement/msf-block.h"
 #include "flash/core/k-core-search.h"
@@ -363,6 +364,10 @@ inline OutArchive& operator>>(OutArchive& out_archive, MATRIX_TYPE& v) {
   return out_archive;
 }
 
+struct DENSEST_TYPE {
+  short core, t;
+};
+
 struct COLOR_TYPE {
   short c, cc;
   int32_t deg;
@@ -570,6 +575,9 @@ void RunFlash() {
     using AppType = grape::flash::MatrixFacFlash<WeightedGraphType, MATRIX_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                                FLAGS_mf_d);
+  } else if (name == "densest-sub-2-approx") {
+    using AppType = grape::flash::DensestFlash<GraphType, DENSEST_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "msf") {
     using AppType = grape::flash::MSFFlash<WeightedGraphType, EMPTY_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
