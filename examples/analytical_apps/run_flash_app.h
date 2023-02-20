@@ -78,6 +78,7 @@ limitations under the License.
 #include "flash/subgraph/densest-sub-2-approx.h"
 #include "flash/measurement/msf.h"
 #include "flash/measurement/msf-block.h"
+#include "flash/measurement/k-center.h"
 #include "flash/core/k-core-search.h"
 #include "flash/core/core.h"
 #include "flash/core/core-2.h"
@@ -610,6 +611,10 @@ void RunFlash() {
   } else if (name == "msf-block") {
     using AppType = grape::flash::MSFBlockFlash<WeightedGraphType, EMPTY_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "k-center") {
+    using AppType = grape::flash::KCenterFlash<GraphType, BFS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_kc_k);
   } else {
     LOG(FATAL) << "Invalid app name: " << name;
   }
