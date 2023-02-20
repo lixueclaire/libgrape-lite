@@ -87,8 +87,10 @@ limitations under the License.
 #include "flash/core/onion-layer-ordering.h"
 #include "flash/clustering/color.h"
 #include "flash/clustering/lpa.h"
+#include "flash/clustering/lpa-by-color.h"
 #include "flash/clustering/ego-net.h"
 #include "flash/clustering/clustering-coeff.h"
+#include "flash/clustering/fluid-community.h"
 
 #ifndef __AFFINITY__
 #define __AFFINITY__ false
@@ -411,6 +413,20 @@ inline OutArchive& operator>>(OutArchive& out_archive, LPA_TYPE& v) {
   return out_archive;
 }
 
+struct LPA_BY_COLOR_TYPE {
+  short c, cc;
+  int deg, label, old, t;
+  std::vector<int> colors;
+};
+inline InArchive& operator<<(InArchive& in_archive, const LPA_BY_COLOR_TYPE& v) {
+  in_archive << v.c << v.deg << v.label << v.t;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, LPA_BY_COLOR_TYPE& v) {
+  out_archive >> v.c >> v.deg >> v.label >> v.t;
+  return out_archive;
+}
+
 struct EGO_TYPE {
   int deg;
   std::vector<int> out;
@@ -424,6 +440,10 @@ inline OutArchive& operator>>(OutArchive& out_archive, EGO_TYPE& v) {
   out_archive >> v.deg >> v.out;
   return out_archive;
 }
+
+struct FLUID_TYPE {
+  int lab, old, l1, l2;
+};
 
 void RunFlash() {
   CommSpec comm_spec;
@@ -577,12 +597,18 @@ void RunFlash() {
                                         LoadStrategy::kBothOutIn>;
     using AppType = grape::flash::LPAFlash<LPAGraphType, LPA_TYPE>;
     CreateAndQuery<LPAGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "lpa-by-color") {
+    using AppType = grape::flash::LPAByColorFlash<GraphType, LPA_BY_COLOR_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "ego-net") {
     using AppType = grape::flash::EgoFlash<GraphType, EGO_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "clustering-coeff") {
     using CLUSTERTING_TYPE = K_CLIQUE_2_TYPE;
     using AppType = grape::flash::ClusteringCoeffFlash<GraphType, CLUSTERTING_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "fluid-community") {
+    using AppType = grape::flash::FluidCommunityFlash<GraphType, FLUID_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "triangle") {
     using AppType = grape::flash::TriangleFlash<GraphType, TRIANGLE_TYPE>;
