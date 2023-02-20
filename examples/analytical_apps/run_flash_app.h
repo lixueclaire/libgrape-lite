@@ -59,6 +59,7 @@ limitations under the License.
 #include "flash/cc/cc-log.h"
 #include "flash/cc/scc.h"
 #include "flash/cc/bcc.h"
+#include "flash/cc/bridge.h"
 #include "flash/matching/mis.h"
 #include "flash/matching/mis-2.h"
 #include "flash/matching/mm-opt.h"
@@ -87,6 +88,7 @@ limitations under the License.
 #include "flash/clustering/color.h"
 #include "flash/clustering/lpa.h"
 #include "flash/clustering/ego-net.h"
+#include "flash/clustering/clustering-coeff.h"
 
 #ifndef __AFFINITY__
 #define __AFFINITY__ false
@@ -513,6 +515,9 @@ void RunFlash() {
   } else if (name == "bcc") {
     using AppType = grape::flash::BCCFlash<GraphType, BCC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "bridge") {
+    using AppType = grape::flash::BridgeFlash<GraphType, BCC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bc") {
     using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
@@ -574,6 +579,10 @@ void RunFlash() {
     CreateAndQuery<LPAGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "ego-net") {
     using AppType = grape::flash::EgoFlash<GraphType, EGO_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "clustering-coeff") {
+    using CLUSTERTING_TYPE = K_CLIQUE_2_TYPE;
+    using AppType = grape::flash::ClusteringCoeffFlash<GraphType, CLUSTERTING_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "triangle") {
     using AppType = grape::flash::TriangleFlash<GraphType, TRIANGLE_TYPE>;
