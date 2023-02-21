@@ -52,21 +52,22 @@ limitations under the License.
 #include "flash/centrality/eigenvec.h"
 #include "flash/centrality/closeness.h"
 #include "flash/centrality/harmonic.h"
-#include "flash/cc/cc.h"
-#include "flash/cc/cc-opt.h"
-#include "flash/cc/cc-block.h"
-#include "flash/cc/cc-union.h"
-#include "flash/cc/cc-log.h"
-#include "flash/cc/scc.h"
-#include "flash/cc/bcc.h"
-#include "flash/cc/cut-point.h"
-#include "flash/cc/bridge.h"
+#include "flash/connectivity/cc.h"
+#include "flash/connectivity/cc-opt.h"
+#include "flash/connectivity/cc-block.h"
+#include "flash/connectivity/cc-union.h"
+#include "flash/connectivity/cc-log.h"
+#include "flash/connectivity/scc.h"
+#include "flash/connectivity/bcc.h"
+#include "flash/connectivity/cut-point.h"
+#include "flash/connectivity/bridge.h"
 #include "flash/matching/mis.h"
 #include "flash/matching/mis-2.h"
 #include "flash/matching/mm.h"
 #include "flash/matching/mm-opt.h"
 #include "flash/matching/mm-opt-2.h"
 #include "flash/matching/min-edge-cover.h"
+#include "flash/matching/min-cover.h"
 #include "flash/ranking/pagerank.h"
 #include "flash/ranking/articlerank.h"
 #include "flash/ranking/ppr.h"
@@ -299,6 +300,11 @@ struct MM_TYPE {
 
 struct MM_2_TYPE {
   int32_t p, s, d;
+};
+
+struct MIN_COVER_TYPE {
+  bool c, s;
+  int d, tmp;
 };
 
 struct K_CORE_TYPE {
@@ -592,6 +598,9 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "min-edge-cover") {
     using AppType = grape::flash::MinEdgeCoverFlash<GraphType, MM_2_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "min-cover") {
+    using AppType = grape::flash::MinCoverFlash<GraphType, MIN_COVER_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-core-search") {
     using AppType = grape::flash::KCoreSearchFlash<GraphType, K_CORE_TYPE>;
