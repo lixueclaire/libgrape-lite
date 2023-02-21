@@ -68,6 +68,8 @@ limitations under the License.
 #include "flash/matching/mm-opt-2.h"
 #include "flash/matching/min-edge-cover.h"
 #include "flash/matching/min-cover.h"
+#include "flash/matching/min-cover-greedy.h"
+#include "flash/matching/min-cover-greedy-2.h"
 #include "flash/ranking/pagerank.h"
 #include "flash/ranking/articlerank.h"
 #include "flash/ranking/ppr.h"
@@ -305,6 +307,11 @@ struct MM_2_TYPE {
 struct MIN_COVER_TYPE {
   bool c, s;
   int d, tmp;
+};
+
+struct MIN_COVER_TYPE_2 {
+  bool c;
+  int d, tmp, f;
 };
 
 struct K_CORE_TYPE {
@@ -601,6 +608,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "min-cover") {
     using AppType = grape::flash::MinCoverFlash<GraphType, MIN_COVER_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "min-cover-greedy") {
+    using AppType = grape::flash::MinCoverGreedyFlash<GraphType, MIN_COVER_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "min-cover-greedy-2") {
+    using AppType = grape::flash::MinCoverGreedy2Flash<GraphType, MIN_COVER_TYPE_2>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-core-search") {
     using AppType = grape::flash::KCoreSearchFlash<GraphType, K_CORE_TYPE>;
