@@ -87,6 +87,7 @@ limitations under the License.
 #include "flash/core/core-2.h"
 #include "flash/core/ab-core.h"
 #include "flash/core/onion-layer-ordering.h"
+#include "flash/core/degeneracy-ordering.h"
 #include "flash/clustering/color.h"
 #include "flash/clustering/lpa.h"
 #include "flash/clustering/lpa-by-color.h"
@@ -328,6 +329,11 @@ inline OutArchive& operator>>(OutArchive& out_archive, CORE_2_TYPE& v) {
   out_archive >> v.core;
   return out_archive;
 }
+
+struct DEGENERACY_TYPE {
+  short core, old;
+  int d, tmp, rank;
+};
 
 struct AB_CORE_TYPE {
   int d, c;
@@ -599,6 +605,9 @@ void RunFlash() {
                                        FLAGS_abcore_a, FLAGS_abcore_b, FLAGS_abcore_nx);
   } else if (name == "onion-layer-ordering") {
     using AppType = grape::flash::OnionFlash<GraphType, ONION_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "degeneracy-ordering") {
+    using AppType = grape::flash::DegeneracyFlash<GraphType, DEGENERACY_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "color") {
     using AppType = grape::flash::ColorFlash<GraphType, COLOR_TYPE>;
