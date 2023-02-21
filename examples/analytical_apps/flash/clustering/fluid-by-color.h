@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_LPA_BY_COLOR_H_
-#define EXAMPLES_ANALYTICAL_APPS_FLASH_LPA_BY_COLOR_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_FLUID_BY_COLOR_H_
+#define EXAMPLES_ANALYTICAL_APPS_FLASH_FLUID_BY_COLOR_H_
 
 #include <grape/grape.h>
 
@@ -22,11 +22,12 @@ limitations under the License.
 #include "../flash_app_base.h"
 #include "grape/fragment/immutable_edgecut_fragment.h"
 
+
 namespace grape {
 namespace flash {
 
 template <typename FRAG_T, typename VALUE_T>
-class LPAByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
+class FluidByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
@@ -38,10 +39,10 @@ class LPAByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
   using vset_t = VertexSubset<fragment_t, value_t>;
   bool sync_all_ = false;
 
-  int* Res(value_t* v) { return &(v->label); }
+ 	int* Res(value_t* v) { return &(v->label); }
 
   void Run(const fragment_t& graph) {
-    Print("Run LPA by coloring with Flash, ");
+    Print("Run fluid-community by coloring with Flash, ");
     int64_t n_vertex = graph.GetTotalVerticesNum();
     Print("total vertices: %lld\n", n_vertex);
 
@@ -64,7 +65,7 @@ class LPAByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 		DefineFV(filter) { return v.cc != v.c; };
 		DefineMapV(local2) { v.c = v.cc; };
 
-		for	(int len = VSize(A), i = 0; len > 0; len = VSize(A), ++i) {
+		for(int len = VSize(A), i = 0; len > 0; len = VSize(A), ++i) {
 			Print("Color Round %d: size=%d\n", i, len);
 			A = EdgeMapDense(All, EU, check, update, CTrueV, false);
 			A = VertexMap(All, CTrueV, local1, false);
@@ -72,7 +73,7 @@ class LPAByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 		}
 
 		int loc_max_color = 0, max_color; 
-		for (auto &id: All.s) 
+		for(auto &id: All.s) 
 			loc_max_color = std::max(loc_max_color, (int)GetV(id)->c);
 		GetMax(loc_max_color, max_color);
 		max_color += 1;
@@ -87,27 +88,48 @@ class LPAByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 			A = VertexMap(A, filter2);
 		}
 
-		DefineMapV(init2) { v.label = id; v.t = 0; };
-		VertexMap(All, CTrueV, init2);
+		int s = 10;
+		std::vector<int> c(s), cnt(s, 0), cnt_loc(s, 0);
+		for	(int i = 0; i < s; ++i)
+			c[i] = rand() % n_vertex;
+		std::sort(c.begin(), c.end());
 
-		std::vector<int> cnt(n_vertex,0);
+		DefineMapV(init_l) {
+			v.t = -max_color;
+			v.label = locate(c, (int)id);
+			if (v.label == s) v.label = -1; else ++cnt_loc[v.label];
+		};
+		VertexMapSeq(All, CTrueV, init_l);
+		DefineFV(filter_l) { return v.label >= 0; };
+		DefineMapV(local_l) { v.t = 0; };
+		DefineMapE(push) { d.t = 0; };
+
+		A = VertexMap(All, filter_l, local_l);
+		EdgeMapSparse(A, EU, CTrueE, push, CTrueV, push);
+
+		std::vector<double> d(s);
 		DefineMapV(relabel) {
+			int pre = v.label;
 			v.old = v.label;
-			int maxcnt = 0, label = -1;
-			for_nb(
-				++cnt[nb.label];
-				if (cnt[nb.label] > maxcnt) { maxcnt = cnt[nb.label]; label = nb.label; }
-			);
-			for_nb(cnt[nb.label] = 0;);
-			if (label != -1) v.label = label;
+			memset(d.data(), 0, sizeof(double) * s);
+			if (v.label >= 0) d[v.label] = 1.0 / cnt[v.label];
+			for_nb (if(nb.label >= 0) d[nb.label] += 1.0/cnt[nb.label]; );
+			for(int i = 0; i < s; ++i)
+				if (d[i] > 1e-10 && (v.label == -1 || d[i] > d[v.label] + 1e-10))
+					v.label = i;
+			if (v.label >= 0) ++cnt_loc[v.label];
+			if (pre >= 0) --cnt_loc[pre];
 		};
 
 		std::vector<int> t_loc(max_color, 0), t_glb(max_color, 0);
-		for(int len = n_vertex, i = 0, nowt = 0; len > 0; ++i) {
-			Print("Label Round %d: size=%d\n", i, len);
+		for(int len = VSize(A), j = 0, nowt = 0; len > 0; ++j) {
+			Reduce(cnt_loc, cnt, for_i(cnt[i] += cnt_loc[i]));
+			int t_cnt = 0; 
+			for(int i = 0; i < s; ++i) t_cnt += cnt[i];
+			Print("Label Round %d: size=%d,t_cnt=%d\n", j, len, t_cnt);
 			len = 0;
 			for(int j = 0; j < max_color; ++j) {
-				if (i >= 3) ++nowt;
+				++nowt;
 				if (t_glb[j] < nowt - max_color) continue;
 
 				DefineFV(filter3) { return v.t >= nowt - max_color; };
@@ -118,13 +140,11 @@ class LPAByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 				A = VertexMap(A, check, update);
 
 				len += VSize(A);
-				if (i >= 3) {
-					DefineMapE(updated) { d.t = nowt; };
-					A = EdgeMapSparse(A, EU, CTrueE, updated, CTrueV, updated);
-					DefineMapV(localv) { t_loc[v.c] = nowt; };
-					VertexMapSeq(A, CTrueV, localv);
-					Reduce(t_loc, t_glb, for_k(t_glb[k] = std::max(t_glb[k], t_loc[k])));
-				}
+				DefineMapE(updated) { d.t = nowt; };
+				vset_t B = EdgeMapSparse(A, EU, CTrueE, updated, CTrueV, updated);
+				DefineMapV(localv) { t_loc[v.c] = nowt; };
+				VertexMapSeq(B, CTrueV, localv);
+				Reduce(t_loc, t_glb, for_k(t_glb[k] = std::max(t_glb[k], t_loc[k])));
 			}
 		}
 	}
@@ -133,4 +153,4 @@ class LPAByColorFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 }  // namespace flash
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_LPA_BY_COLOR_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_FLUID_BY_COLOR_H_

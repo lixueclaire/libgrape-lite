@@ -91,6 +91,7 @@ limitations under the License.
 #include "flash/clustering/ego-net.h"
 #include "flash/clustering/clustering-coeff.h"
 #include "flash/clustering/fluid-community.h"
+#include "flash/clustering/fluid-by-color.h"
 
 #ifndef __AFFINITY__
 #define __AFFINITY__ false
@@ -609,6 +610,9 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "fluid-community") {
     using AppType = grape::flash::FluidCommunityFlash<GraphType, FLUID_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "fluid-by-color") {
+    using AppType = grape::flash::FluidByColorFlash<GraphType, LPA_BY_COLOR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "triangle") {
     using AppType = grape::flash::TriangleFlash<GraphType, TRIANGLE_TYPE>;
