@@ -59,11 +59,13 @@ limitations under the License.
 #include "flash/cc/cc-log.h"
 #include "flash/cc/scc.h"
 #include "flash/cc/bcc.h"
+#include "flash/cc/cut-point.h"
 #include "flash/cc/bridge.h"
 #include "flash/matching/mis.h"
 #include "flash/matching/mis-2.h"
-#include "flash/matching/mm-opt.h"
 #include "flash/matching/mm.h"
+#include "flash/matching/mm-opt.h"
+#include "flash/matching/mm-opt-2.h"
 #include "flash/ranking/pagerank.h"
 #include "flash/ranking/articlerank.h"
 #include "flash/ranking/ppr.h"
@@ -291,6 +293,10 @@ struct MIS_2_TYPE {
 
 struct MM_TYPE {
   int32_t p, s;
+};
+
+struct MM_2_TYPE {
+  int32_t p, s, d;
 };
 
 struct K_CORE_TYPE {
@@ -536,6 +542,9 @@ void RunFlash() {
   } else if (name == "bcc") {
     using AppType = grape::flash::BCCFlash<GraphType, BCC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cut-point") {
+    using AppType = grape::flash::CutPointFlash<GraphType, BCC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bridge") {
     using AppType = grape::flash::BridgeFlash<GraphType, BCC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
@@ -570,6 +579,9 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "mm-opt") {
     using AppType = grape::flash::MMOptFlash<GraphType, MM_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "mm-opt-2") {
+    using AppType = grape::flash::MMOpt2Flash<GraphType, MM_2_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-core-search") {
     using AppType = grape::flash::KCoreSearchFlash<GraphType, K_CORE_TYPE>;
