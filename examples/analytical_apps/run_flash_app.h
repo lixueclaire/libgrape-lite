@@ -66,6 +66,7 @@ limitations under the License.
 #include "flash/matching/mm.h"
 #include "flash/matching/mm-opt.h"
 #include "flash/matching/mm-opt-2.h"
+#include "flash/matching/min-edge-cover.h"
 #include "flash/ranking/pagerank.h"
 #include "flash/ranking/articlerank.h"
 #include "flash/ranking/ppr.h"
@@ -588,6 +589,9 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "mm-opt-2") {
     using AppType = grape::flash::MMOpt2Flash<GraphType, MM_2_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "min-edge-cover") {
+    using AppType = grape::flash::MinEdgeCoverFlash<GraphType, MM_2_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-core-search") {
     using AppType = grape::flash::KCoreSearchFlash<GraphType, K_CORE_TYPE>;
