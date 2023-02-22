@@ -70,6 +70,8 @@ limitations under the License.
 #include "flash/matching/min-cover.h"
 #include "flash/matching/min-cover-greedy.h"
 #include "flash/matching/min-cover-greedy-2.h"
+#include "flash/matching/min-dominating-set.h"
+#include "flash/matching/min-dominating-set-2.h"
 #include "flash/ranking/pagerank.h"
 #include "flash/ranking/articlerank.h"
 #include "flash/ranking/ppr.h"
@@ -312,6 +314,16 @@ struct MIN_COVER_TYPE {
 struct MIN_COVER_TYPE_2 {
   bool c;
   int d, tmp, f;
+};
+
+struct MIN_DOMINATING_SET_TYPE {
+  bool d, b;
+  int max_id, max_cnt;
+};
+
+struct MIN_DOMINATING_SET_2_TYPE {
+  bool d, b;
+  int cnt, cnt1, fid1, fid2, tmp;
 };
 
 struct K_CORE_TYPE {
@@ -614,6 +626,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "min-cover-greedy-2") {
     using AppType = grape::flash::MinCoverGreedy2Flash<GraphType, MIN_COVER_TYPE_2>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "min-dominating-set") {
+    using AppType = grape::flash::MinDominatingSetFlash<GraphType, MIN_DOMINATING_SET_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "min-dominating-set-2") {
+    using AppType = grape::flash::MinDominatingSet2Flash<GraphType, MIN_DOMINATING_SET_2_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-core-search") {
     using AppType = grape::flash::KCoreSearchFlash<GraphType, K_CORE_TYPE>;

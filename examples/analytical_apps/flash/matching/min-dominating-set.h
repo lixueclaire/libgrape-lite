@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_MIN_COVER_GREEDY_2_H_
-#define EXAMPLES_ANALYTICAL_APPS_FLASH_MIN_COVER_GREEDY_2_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_MIN_DOMINATING_SET_H_
+#define EXAMPLES_ANALYTICAL_APPS_FLASH_MIN_DOMINATING_SET_H_
 
 #include <grape/grape.h>
 
@@ -26,7 +26,7 @@ namespace grape {
 namespace flash {
 
 template <typename FRAG_T, typename VALUE_T>
-class MinCoverGreedy2Flash : public FlashAppBase<FRAG_T, VALUE_T> {
+class MinDominatingSetFlash : public FlashAppBase<FRAG_T, VALUE_T> {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
@@ -38,49 +38,47 @@ class MinCoverGreedy2Flash : public FlashAppBase<FRAG_T, VALUE_T> {
   using vset_t = VertexSubset<fragment_t, value_t>;
   bool sync_all_ = false;
 
-  bool* Res(value_t* v) { return &(v->c); }
+  bool* Res(value_t* v) { return &(v->b); }
 
   void Run(const fragment_t& graph) {
     int n_vertex = graph.GetTotalVerticesNum();
-    Print("Run Min Cover with Flash, total vertices: %d\n", n_vertex);
+    Print("Run Min Dominating Set with Flash, total vertices: %d\n", n_vertex);
 
-		DefineMapV(init) { v.c = false; v.d = Deg(id); v.tmp = 0;};
+		DefineMapV(init) { v.max_cnt = Deg(id); v.d = false; v.b = false; v.max_id = id; };
 		vset_t A = VertexMap(All, CTrueV, init);
 
+		DefineMapV(local) {
+			for_nb(
+				if(!nb.d && (nb.max_cnt > v.max_cnt || (nb.max_cnt == v.max_cnt && nb.max_id > v.max_id))) { v.max_cnt = nb.max_cnt; v.max_id = nb.max_id; }
+			)};
+
 		for(int i = 0, len = VSize(A); len > 0; ++i, len = VSize(A)) {
-			Print("Round %d,len=%d,", i, len );
+			Print("Round %d,len=%d,", i, len);
+			VertexMap(A, CTrueV, local);
+			VertexMap(A, CTrueV, local);
 
-			DefineMapV(local1) {
-				int cnt = v.d; 
-				v.f = id; 
-				for_nb(
-					if (nb.c) continue;
-					if (nb.d > cnt || (nb.d == cnt && nb_id > id)) { cnt = nb.d; v.f = nb_id; }
-				); 
-				if (v.f == id) v.c = true;
-			};
-			vset_t B = VertexMap(A, CTrueV, local1);
-			DefineFV(filter1) { return v.c; };
-			B = VertexMap(B, filter1);
-
+			DefineFV(filter1) { return id == v.max_id; };
+			DefineMapV(local1) { v.b = true; v.d = true; };
+			vset_t B = VertexMap(A, filter1, local1);
 			int cnt = VSize(B);
-			Print("selected=%d\n", cnt);
+			Print("%d added\n", cnt);
 
-			DefineFE(check) { return !d.c; };
-			DefineMapE(update) { d.tmp ++; };
-			DefineMapE(reduce) { d.tmp += s.tmp; };
-			B = EdgeMapSparse(B, EU, check, update, CTrueV, reduce);
+			DefineFE(check) { return !d.d; };
+			DefineMapE(update) { d.d = true; };
+			EdgeMapSparse(B, EU, check, update, CTrueV, update);
 
-			DefineMapV(local2) { v.d -= v.tmp; v.tmp = 0; };
-			VertexMap(B, CTrueV, local2);
-
-			DefineFV(filter2) { return !v.c && v.d > 0; };
-			A = VertexMap(A, filter2);
+			DefineFV(filter2) { return !v.d; };
+			DefineMapV(local2) {
+				v.max_id = id;
+				v.max_cnt = 0;
+				for_nb( if (!nb.d) ++v.max_cnt; );
+			};
+			A = VertexMap(A, filter2, local2);
 		}
 
-		DefineFV(filter) { return v.c; };
+		DefineFV(filter) { return v.b; };
 		int n_mc = VSize(VertexMap(All, filter));
-		Print("size of vertex-cover=%d\n", n_mc);
+		Print("size of min dominating set = %d\n", n_mc);
 	}
    	
 };
@@ -88,4 +86,4 @@ class MinCoverGreedy2Flash : public FlashAppBase<FRAG_T, VALUE_T> {
 }  // namespace flash
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_MIN_COVER_GREEDY_2_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_MIN_DOMINATING_SET_H_
