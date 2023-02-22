@@ -58,6 +58,7 @@ limitations under the License.
 #include "flash/connectivity/cc-union.h"
 #include "flash/connectivity/cc-log.h"
 #include "flash/connectivity/scc.h"
+#include "flash/connectivity/scc-2.h"
 #include "flash/connectivity/bcc.h"
 #include "flash/connectivity/cut-point.h"
 #include "flash/connectivity/bridge.h"
@@ -570,6 +571,9 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "scc") {
     using AppType = grape::flash::SCCFlash<GraphType, SCC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "scc-2") {
+    using AppType = grape::flash::SCC2Flash<GraphType, SCC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bcc") {
     using AppType = grape::flash::BCCFlash<GraphType, BCC_TYPE>;
