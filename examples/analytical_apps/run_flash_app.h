@@ -60,8 +60,11 @@ limitations under the License.
 #include "flash/connectivity/scc.h"
 #include "flash/connectivity/scc-2.h"
 #include "flash/connectivity/bcc.h"
+#include "flash/connectivity/bcc-2.h"
 #include "flash/connectivity/cut-point.h"
+#include "flash/connectivity/cut-point-2.h"
 #include "flash/connectivity/bridge.h"
+#include "flash/connectivity/bridge-2.h"
 #include "flash/matching/mis.h"
 #include "flash/matching/mis-2.h"
 #include "flash/matching/mm.h"
@@ -255,6 +258,10 @@ struct SCC_TYPE {
 
 struct BCC_TYPE {
   int d, cid, p, dis, bcc;
+};
+
+struct BCC_2_TYPE {
+  int d, cid, p, dis, nd, pre, oldc, oldd, minp, maxp, tmp;
 };
 
 struct PR_TYPE {
@@ -578,11 +585,20 @@ void RunFlash() {
   } else if (name == "bcc") {
     using AppType = grape::flash::BCCFlash<GraphType, BCC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "bcc-2") {
+    using AppType = grape::flash::BCC2Flash<GraphType, BCC_2_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "cut-point") {
     using AppType = grape::flash::CutPointFlash<GraphType, BCC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cut-point-2") {
+    using AppType = grape::flash::CutPoint2Flash<GraphType, BCC_2_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bridge") {
     using AppType = grape::flash::BridgeFlash<GraphType, BCC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "bridge-2") {
+    using AppType = grape::flash::Bridge2Flash<GraphType, BCC_2_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "bc") {
     using AppType = grape::flash::BCFlash<GraphType, BC_TYPE>;
