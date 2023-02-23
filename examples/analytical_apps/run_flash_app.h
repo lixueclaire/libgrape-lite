@@ -47,6 +47,7 @@ limitations under the License.
 #include "flash/traversal/dfs-undirected.h"
 #include "flash/traversal/sssp.h"
 #include "flash/traversal/sssp-dlt-step.h"
+#include "flash/traversal/random-walk.h"
 #include "flash/centrality/bc.h"
 #include "flash/centrality/bc-undirected.h"
 #include "flash/centrality/katz.h"
@@ -190,6 +191,18 @@ struct EMPTY_TYPE { };
 struct BFS_TYPE {
   int dis; 
 };
+
+struct RANDOM_WALK_TYPE {
+  std::vector<int> from, from2, walk;
+};
+inline InArchive& operator<<(InArchive& in_archive, const RANDOM_WALK_TYPE& v) {
+  in_archive << v.from << v.from2;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, RANDOM_WALK_TYPE& v) {
+  out_archive >> v.from >> v.from2;
+  return out_archive;
+}
 
 struct DFS_TYPE {
   int f, deg, pre;
@@ -551,6 +564,9 @@ void RunFlash() {
     using AppType = grape::flash::SSSPDltStepFlash<WeightedGraphType, SSSP_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                                FLAGS_sssp_source);
+  } else if (name == "random-walk") {
+    using AppType = grape::flash::RandomWalkFlash<GraphType, RANDOM_WALK_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "pagerank") {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
