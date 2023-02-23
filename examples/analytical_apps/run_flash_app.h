@@ -52,6 +52,7 @@ limitations under the License.
 #include "flash/traversal/random-walk.h"
 #include "flash/traversal/random-walk-undirected.h"
 #include "flash/traversal/random-multi-bfs.h"
+#include "flash/traversal/random-multi-bfs-undirected.h"
 #include "flash/centrality/bc.h"
 #include "flash/centrality/bc-undirected.h"
 #include "flash/centrality/katz.h"
@@ -609,6 +610,9 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "random-multi-bfs") {
     using AppType = grape::flash::RandomMultiBFSFlash<GraphType, MULTI_BFS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "random-multi-bfs-undirected") {
+    using AppType = grape::flash::RandomMultiBFSUndirectedFlash<GraphType, MULTI_BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "pagerank") {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
