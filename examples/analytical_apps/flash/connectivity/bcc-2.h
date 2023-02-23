@@ -88,7 +88,6 @@ class BCC2Flash : public FlashAppBase<FRAG_T, VALUE_T> {
 			DefineMapE(update) { d.tmp += s.nd; };
 			DefineMapE(reduce) { d.tmp += s.tmp; };
 			B = EdgeMapSparse(B, edges, CTrueE, update, CTrueV, reduce);
-			std::cout<<VSize(B)<<std::endl;
 
 			DefineMapV(local) { v.nd += v.tmp; v.tmp = 0; };
 			B = VertexMap(B, CTrueV, local);

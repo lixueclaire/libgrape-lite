@@ -46,9 +46,11 @@ limitations under the License.
 #include "flash/traversal/dfs.h"
 #include "flash/traversal/dfs-undirected.h"
 #include "flash/traversal/sssp.h"
+#include "flash/traversal/sssp-dlt-step.h"
 #include "flash/centrality/bc.h"
 #include "flash/centrality/bc-undirected.h"
 #include "flash/centrality/katz.h"
+#include "flash/centrality/katz-undirected.h"
 #include "flash/centrality/eigenvec.h"
 #include "flash/centrality/closeness.h"
 #include "flash/centrality/harmonic.h"
@@ -544,7 +546,11 @@ void RunFlash() {
   } else if (name == "sssp") {
     using AppType = grape::flash::SSSPFlash<WeightedGraphType, SSSP_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
-                                           FLAGS_sssp_source);
+                                               FLAGS_sssp_source);
+  } else if (name == "sssp-dlt-step") {
+    using AppType = grape::flash::SSSPDltStepFlash<WeightedGraphType, SSSP_TYPE>;
+    CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                               FLAGS_sssp_source);
   } else if (name == "pagerank") {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
@@ -610,6 +616,9 @@ void RunFlash() {
                                        FLAGS_bc_source);
   } else if (name == "katz") {
     using AppType = grape::flash::KATZFlash<GraphType, KATZ_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "katz-undirected") {
+    using AppType = grape::flash::KATZUndirectedFlash<GraphType, KATZ_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "eigenvec") {
     using AppType = grape::flash::EigenvecFlash<GraphType, KATZ_TYPE>;
