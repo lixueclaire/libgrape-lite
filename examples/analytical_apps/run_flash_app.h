@@ -51,6 +51,7 @@ limitations under the License.
 #include "flash/traversal/sssp-dlt-step-undirected.h"
 #include "flash/traversal/random-walk.h"
 #include "flash/traversal/random-walk-undirected.h"
+#include "flash/traversal/random-multi-bfs.h"
 #include "flash/centrality/bc.h"
 #include "flash/centrality/bc-undirected.h"
 #include "flash/centrality/katz.h"
@@ -98,6 +99,7 @@ limitations under the License.
 #include "flash/measurement/msf.h"
 #include "flash/measurement/msf-block.h"
 #include "flash/measurement/diameter-approx.h"
+#include "flash/measurement/diameter-approx-2.h"
 #include "flash/measurement/k-center.h"
 #include "flash/core/k-core-search.h"
 #include "flash/core/core.h"
@@ -205,6 +207,20 @@ inline InArchive& operator<<(InArchive& in_archive, const RANDOM_WALK_TYPE& v) {
 }
 inline OutArchive& operator>>(OutArchive& out_archive, RANDOM_WALK_TYPE& v) {
   out_archive >> v.from >> v.from2;
+  return out_archive;
+}
+
+struct MULTI_BFS_TYPE {
+  int64_t seen;
+  std::vector<int> d;
+  int res;
+};
+inline InArchive& operator<<(InArchive& in_archive, const MULTI_BFS_TYPE& v) {
+  in_archive << v.seen;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, MULTI_BFS_TYPE& v) {
+  out_archive >> v.seen;
   return out_archive;
 }
 
@@ -515,6 +531,10 @@ struct DIAMETER_TYPE {
   int64_t seen;
   int ecc;
 };
+struct DIAMETER_2_TYPE {
+  int64_t seen;
+  int dis, ecc;
+};
 
 void RunFlash() {
   CommSpec comm_spec;
@@ -586,6 +606,9 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "random-walk-undirected") {
     using AppType = grape::flash::RandomWalkUndirectedFlash<GraphType, RANDOM_WALK_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "random-multi-bfs") {
+    using AppType = grape::flash::RandomMultiBFSFlash<GraphType, MULTI_BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "pagerank") {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
@@ -782,6 +805,9 @@ void RunFlash() {
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "diameter-approx") {
     using AppType = grape::flash::DiameterApproxFlash<GraphType, DIAMETER_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "diameter-approx-2") {
+    using AppType = grape::flash::DiameterApprox2Flash<GraphType, DIAMETER_2_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-center") {
     using AppType = grape::flash::KCenterFlash<GraphType, BFS_TYPE>;
