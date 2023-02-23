@@ -97,6 +97,7 @@ limitations under the License.
 #include "flash/subgraph/densest-sub-2-approx.h"
 #include "flash/measurement/msf.h"
 #include "flash/measurement/msf-block.h"
+#include "flash/measurement/diameter-approx.h"
 #include "flash/measurement/k-center.h"
 #include "flash/core/k-core-search.h"
 #include "flash/core/core.h"
@@ -510,6 +511,11 @@ struct FLUID_TYPE {
   int lab, old, l1, l2;
 };
 
+struct DIAMETER_TYPE {
+  int64_t seen;
+  int ecc;
+};
+
 void RunFlash() {
   CommSpec comm_spec;
   comm_spec.Init(MPI_COMM_WORLD);
@@ -774,6 +780,9 @@ void RunFlash() {
   } else if (name == "msf-block") {
     using AppType = grape::flash::MSFBlockFlash<WeightedGraphType, EMPTY_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "diameter-approx") {
+    using AppType = grape::flash::DiameterApproxFlash<GraphType, DIAMETER_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "k-center") {
     using AppType = grape::flash::KCenterFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
