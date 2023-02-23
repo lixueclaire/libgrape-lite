@@ -46,8 +46,11 @@ limitations under the License.
 #include "flash/traversal/dfs.h"
 #include "flash/traversal/dfs-undirected.h"
 #include "flash/traversal/sssp.h"
+#include "flash/traversal/sssp-undirected.h"
 #include "flash/traversal/sssp-dlt-step.h"
+#include "flash/traversal/sssp-dlt-step-undirected.h"
 #include "flash/traversal/random-walk.h"
+#include "flash/traversal/random-walk-undirected.h"
 #include "flash/centrality/bc.h"
 #include "flash/centrality/bc-undirected.h"
 #include "flash/centrality/katz.h"
@@ -560,12 +563,23 @@ void RunFlash() {
     using AppType = grape::flash::SSSPFlash<WeightedGraphType, SSSP_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                                FLAGS_sssp_source);
+  } else if (name == "sssp-undirected") {
+    using AppType = grape::flash::SSSPUndirectedFlash<WeightedGraphType, SSSP_TYPE>;
+    CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                               FLAGS_sssp_source);
   } else if (name == "sssp-dlt-step") {
     using AppType = grape::flash::SSSPDltStepFlash<WeightedGraphType, SSSP_TYPE>;
     CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                                FLAGS_sssp_source);
+  } else if (name == "sssp-dlt-step-undirected") {
+    using AppType = grape::flash::SSSPDltStepUndirectedFlash<WeightedGraphType, SSSP_TYPE>;
+    CreateAndQuery<WeightedGraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                               FLAGS_sssp_source);
   } else if (name == "random-walk") {
     using AppType = grape::flash::RandomWalkFlash<GraphType, RANDOM_WALK_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "random-walk-undirected") {
+    using AppType = grape::flash::RandomWalkUndirectedFlash<GraphType, RANDOM_WALK_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "pagerank") {
     using AppType = grape::flash::PRFlash<GraphType, PR_TYPE>;
