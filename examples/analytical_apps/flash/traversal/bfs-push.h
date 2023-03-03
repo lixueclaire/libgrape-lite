@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_BFS_H_
-#define EXAMPLES_ANALYTICAL_APPS_FLASH_BFS_H_
+#ifndef EXAMPLES_ANALYTICAL_APPS_FLASH_BFS_PUSH_H_
+#define EXAMPLES_ANALYTICAL_APPS_FLASH_BFS_PUSH_H_
 
 #include <grape/grape.h>
 
@@ -26,7 +26,7 @@ namespace grape {
 namespace flash {
 
 template <typename FRAG_T, typename VALUE_T>
-class BFSFlash : public FlashAppBase<FRAG_T, VALUE_T> {
+class BFSPushFlash : public FlashAppBase<FRAG_T, VALUE_T> {
  public:
   using fragment_t = FRAG_T;
   using vid_t = typename fragment_t::vid_t;
@@ -59,8 +59,8 @@ class BFSFlash : public FlashAppBase<FRAG_T, VALUE_T> {
     DefineFV(cond) { return v.dis == -1; };
 
     for (int len = VSize(a), i = 1; len > 0; len = VSize(a), ++i) {
-      Print("Round %d: size = %d\n", i, len);
-      a = EdgeMap(a, ED, CTrueE, update, cond);
+      Print("Round %d (Sparse): size = %d\n", i, len);
+      a = EdgeMapSparse(a, ED, CTrueE, update, cond);
     }
   }
 };
@@ -68,4 +68,4 @@ class BFSFlash : public FlashAppBase<FRAG_T, VALUE_T> {
 }  // namespace flash
 }  // namespace grape
 
-#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_BFS_H_
+#endif  // EXAMPLES_ANALYTICAL_APPS_FLASH_BFS_PUSH_H_

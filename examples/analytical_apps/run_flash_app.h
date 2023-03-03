@@ -42,6 +42,8 @@ limitations under the License.
 #include "flash/flash_flags.h"
 #include "flash/flash_worker.h"
 #include "flash/traversal/bfs.h"
+#include "flash/traversal/bfs-push.h"
+#include "flash/traversal/bfs-pull.h"
 #include "flash/traversal/bfs-undirected.h"
 #include "flash/traversal/dfs.h"
 #include "flash/traversal/dfs-undirected.h"
@@ -62,6 +64,8 @@ limitations under the License.
 #include "flash/centrality/harmonic.h"
 #include "flash/connectivity/cc.h"
 #include "flash/connectivity/cc-opt.h"
+#include "flash/connectivity/cc-push.h"
+#include "flash/connectivity/cc-pull.h"
 #include "flash/connectivity/cc-block.h"
 #include "flash/connectivity/cc-union.h"
 #include "flash/connectivity/cc-log.h"
@@ -594,6 +598,14 @@ void RunFlash() {
     using AppType = grape::flash::BFSFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
                                        FLAGS_bfs_source);
+  } else if (name == "bfs-push") {
+    using AppType = grape::flash::BFSPushFlash<GraphType, BFS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_bfs_source);
+  } else if (name == "bfs-pull") {
+    using AppType = grape::flash::BFSPullFlash<GraphType, BFS_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
+                                       FLAGS_bfs_source);
   } else if (name == "bfs-undirected") {
     using AppType = grape::flash::BFSUndirectedFlash<GraphType, BFS_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec,
@@ -653,6 +665,12 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "cc-opt") {
     using AppType = grape::flash::CCOptFlash<GraphType, CC_OPT_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cc-push") {
+    using AppType = grape::flash::CCPushFlash<GraphType, CC_OPT_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cc-pull") {
+    using AppType = grape::flash::CCPullFlash<GraphType, CC_OPT_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "cc-block") {
     using AppType = grape::flash::CCBlockFlash<GraphType, CC_TYPE>;
