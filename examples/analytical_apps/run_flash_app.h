@@ -89,8 +89,13 @@ limitations under the License.
 #include "flash/ranking/ppr.h"
 #include "flash/ranking/hits.h"
 #include "flash/subgraph/triangle.h"
-#include "flash/subgraph/3-path.h"
+#include "flash/subgraph/cyclic-triangle.h"
+#include "flash/subgraph/acyclic-triangle.h"
+#include "flash/subgraph/cycle-plus-triangle.h"
+#include "flash/subgraph/in-triangle.h"
+#include "flash/subgraph/out-triangle.h"
 #include "flash/subgraph/tailed-triangle.h"
+#include "flash/subgraph/3-path.h"
 #include "flash/subgraph/rectangle.h"
 #include "flash/subgraph/diamond.h"
 #include "flash/subgraph/k-clique.h"
@@ -424,6 +429,19 @@ inline InArchive& operator<<(InArchive& in_archive, const TRIANGLE_TYPE& v) {
 }
 inline OutArchive& operator>>(OutArchive& out_archive, TRIANGLE_TYPE& v) {
   out_archive >> v.deg >> v.out;
+  return out_archive;
+}
+
+struct CYCLIC_TYPE {
+  int32_t deg, count;
+  std::set<int32_t> in, out;
+};
+inline InArchive& operator<<(InArchive& in_archive, const CYCLIC_TYPE& v) {
+  in_archive << v.deg << v.in;
+  return in_archive;
+}
+inline OutArchive& operator>>(OutArchive& out_archive, CYCLIC_TYPE& v) {
+  out_archive >> v.deg >> v.in;
   return out_archive;
 }
 
@@ -776,6 +794,21 @@ void RunFlash() {
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "tailed-triangle") {
     using AppType = grape::flash::TailedTriangleFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cyclic-triangle") {
+    using AppType = grape::flash::CyclicTriangleFlash<GraphType, CYCLIC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "acyclic-triangle") {
+    using AppType = grape::flash::AcyclicTriangleFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "cycle-plus-triangle") {
+    using AppType = grape::flash::CyclePlusTriangleFlash<GraphType, CYCLIC_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "in-triangle") {
+    using AppType = grape::flash::InTriangleFlash<GraphType, TRIANGLE_TYPE>;
+    CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
+  } else if (name == "out-triangle") {
+    using AppType = grape::flash::OutTriangleFlash<GraphType, CYCLIC_TYPE>;
     CreateAndQuery<GraphType, AppType>(comm_spec, out_prefix, fnum, spec);
   } else if (name == "3-path") {
     using AppType = grape::flash::ThreePathFlash<GraphType, TRIANGLE_TYPE>;
