@@ -337,14 +337,13 @@ void FlashWare<fragment_t, value_t>::Barrier(bool flag) {
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SendNext(
     const fid_t& pid, const vid_t& key, const int& tid) {
-  messages_.SendVertexToFragment<vid_t, value_t>(pid, key, next_states_[key],
-                                                 tid);
+  messages_.SendToFragment<std::pair<vid_t, value_t>>(pid, std::make_pair(key, next_states_[key]), tid);
 }
 
 template <typename fragment_t, class value_t>
 inline void FlashWare<fragment_t, value_t>::SendCurrent(
     const fid_t& pid, const vid_t& key, const int& tid) {
-  messages_.SendVertexToFragment<vid_t, value_t>(pid, key, states_[key], tid);
+  messages_.SendToFragment<std::pair<vid_t, value_t>>(pid, std::make_pair(key, states_[key]), tid);
 }
 
 template <typename fragment_t, class value_t>
