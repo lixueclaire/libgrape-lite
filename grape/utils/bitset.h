@@ -116,13 +116,6 @@ class Bitset {
     }
   }
 
-  void move(Bitset& other) {
-    size_ = other.size_;
-    size_in_words_ = other.size_in_words_;
-    data_ = other.data_;
-    other.data_ = NULL;
-  }
-
   void parallel_clear(ThreadPool& thread_pool) {
     uint32_t thread_num = thread_pool.GetThreadNum();
     size_t chunk_size =
@@ -302,12 +295,6 @@ class Bitset {
   inline const uint64_t* get_word_ptr(size_t i) const {
     return &data_[WORD_INDEX(i)];
   }
-
-  inline size_t get_size() const {return size_; }
-
-  inline size_t get_size_in_words() const {return size_in_words_; }
-
-  inline uint64_t* get_data() {return data_; }
 
  private:
   uint64_t* data_;

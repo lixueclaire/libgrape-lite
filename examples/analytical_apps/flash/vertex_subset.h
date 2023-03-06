@@ -34,6 +34,8 @@ class VertexSubset {
   using value_t = VALUE_T;
   using vid_t = typename fragment_t::vid_t;
   using vset_t = VertexSubset<fragment_t, value_t>;
+  using Bitset = grape::flash::FlashBitset;
+  
   static vset_t all;
   static vset_t empty;
   static grape::flash::FlashWare<fragment_t, value_t>* fw;

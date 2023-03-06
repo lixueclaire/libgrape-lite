@@ -23,6 +23,7 @@ limitations under the License.
 #include "grape/worker/comm_spec.h"
 
 #include "flash/flash_app_base.h"
+#include "flash/flash_bitset.h"
 
 namespace grape {
 namespace flash {
@@ -41,6 +42,7 @@ class FlashWare : public Communicator, public ParallelEngine {
   using edata_t = typename fragment_t::edata_t;
   using vertex_map_t = typename fragment_t::vertex_map_t;
   using value_t = VALUE_T;
+  using Bitset = grape::flash::FlashBitset;
 
   FlashWare() = default;
   ~FlashWare() {
